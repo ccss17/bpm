@@ -115,8 +115,12 @@ if __name__ == "__main__":
     ]
 
     for sample in samples:
-        test_bpm_estimator_librosa(sample["wav"])
-        test_bpm_estimator_pretty_midi(sample["mid"])
-        test_get_bpm_from_midi(sample["mid"])
-        print()
+        # test_bpm_estimator_librosa(sample["wav"])
+        # test_bpm_estimator_pretty_midi(sample["mid"])
+        # test_get_bpm_from_midi(sample["mid"])
+        print(
+            f'{bpm_estimator_librosa(sample["wav"])[0]:.2f}'
+            + f' {bpm_estimator_pretty_midi(sample["mid"]):.2f}'
+            + f' {get_bpm_from_midi(sample["mid"]):.2f}'
+        )
     # test_mido()
