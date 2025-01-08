@@ -2,3 +2,4 @@ dataset/
 test.*
 *.exe
 *.CFG
+test/
