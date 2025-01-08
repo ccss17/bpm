@@ -175,36 +175,6 @@ def estimated_bpm_error(audio_path, midi_path):
 
 
 def statistics_estimated_bpm_error(path_obj):
-    """Function to get statistics of errors of estimated bpm"""
-    error_list = []
-    corrected_error_2_list = []
-    corrected_error_4_list = []
-    corrected_error_8_list = []
-
-    for audio_path, midi_path in zip(path_obj.rglob("*.wav"), path_obj.rglob("*.mid")):
-        error, corrected_error_2, corrected_error_4, corrected_error_8 = (
-            estimated_bpm_error(audio_path, midi_path)
-        )
-        error_list.append(error)
-        corrected_error_2_list.append(corrected_error_2)
-        corrected_error_4_list.append(corrected_error_4)
-        corrected_error_8_list.append(corrected_error_8)
-    print(statistics.mean(error_list), statistics.stdev(error_list))
-    print(
-        statistics.mean(corrected_error_2_list),
-        statistics.stdev(corrected_error_2_list),
-    )
-    print(
-        statistics.mean(corrected_error_4_list),
-        statistics.stdev(corrected_error_4_list),
-    )
-    print(
-        statistics.mean(corrected_error_8_list),
-        statistics.stdev(corrected_error_8_list),
-    )
-
-
-def statistics_estimated_bpm_error_mp(path_obj):
     """Function to get statistics of errors of estimated bpm
     by multiprocessing"""
 
@@ -260,8 +230,8 @@ if __name__ == "__main__":
     # analysis_midi(samples[2]["mid"])
     # analysis_midi(samples[3]["mid"])
 
-    dataset_004 = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
-    dataset_117 = pathlib.Path("d:/dataset/177.다음색 가이드보컬 데이터")
-    dataset_117 = pathlib.Path("dataset/SINGER_16")
-    statistics_estimated_bpm_error(dataset_117)
-    statistics_estimated_bpm_error_mp(dataset_117)
+    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    data_path = pathlib.Path("d:/dataset/177.다음색 가이드보컬 데이터")
+    data_path = pathlib.Path("dataset/SINGER_16")
+    data_path = pathlib.Path("dataset/가창자_s02")
+    statistics_estimated_bpm_error(data_path)
