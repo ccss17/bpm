@@ -35,20 +35,6 @@ def get_bpm_from_midi(midi_path):
                     time_signature = (msg.numerator, msg.denominator)
                 elif msg.type == "set_tempo":
                     return mido.tempo2bpm(msg.tempo, time_signature=time_signature)
-    elif mid.type == 1:
-        item_num = 0
-        maximum_item_num = float("-inf")
-        dominant_tempo = 120
-        for i, msg in enumerate(mido.merge_tracks(mid.tracks)):
-            if msg.type == "note_on" or msg.type == "note_off" or msg.type == "lyrics":
-                item_num += 1
-            elif msg.type == "set_tempo":
-                tempo = round(mido.tempo2bpm(msg.tempo, time_signature=time_signature))
-                if maximum_item_num < item_num:
-                    dominant_tempo = tempo
-                    maximum_item_num = item_num
-                item_num = 0
-        return dominant_tempo
 
 
 def print_track(
@@ -113,7 +99,8 @@ def print_track(
             )
             time_signature = (msg.numerator, msg.denominator)
         elif msg.type == "set_tempo":
-            print(f"item num: {item_num}")
+            if print_dominant_tempo:
+                print(" " * 8 + f"Total item num: {item_num}")
             tempo = round(mido.tempo2bpm(msg.tempo, time_signature=time_signature))
             print(f"{i:4} [Tempo] BPM={tempo} (time={msg.time})")
             item_num = 0
@@ -273,7 +260,6 @@ if __name__ == "__main__":
         if i == 4:
             test_convert_midi_format_1_to_0(mid_path)
             print()
-            print(get_bpm_from_midi(mid_path))
             print(mid_path)
 
     # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
