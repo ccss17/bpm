@@ -12,9 +12,9 @@ def bpm_estimator_librosa(audio_path):
     return tempo
 
 
-def bpm_estimator_pretty_midi(audio_path):
-    """Function to estimate BPM from audio file by pretty_midi"""
-    midi_data = pretty_midi.PrettyMIDI(audio_path)
+def bpm_estimator_pretty_midi(mid_path):
+    """Function to estimate BPM from mid file by pretty_midi"""
+    midi_data = pretty_midi.PrettyMIDI(mid_path)
     return midi_data.estimate_tempo()
 
 
