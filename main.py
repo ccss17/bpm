@@ -24,15 +24,15 @@ def get_bpm_from_midi(mid_path):
     time_signature = (4, 4)
     for track in mid.tracks:
         for msg in track:
-            if msg.type == "set_tempo":
-                return mido.tempo2bpm(msg.tempo, time_signature=time_signature)
-            elif msg.type == "time_signature":
+            if msg.type == "time_signature":
                 time_signature = (msg.numerator, msg.denominator)
+            elif msg.type == "set_tempo":
+                return mido.tempo2bpm(msg.tempo, time_signature=time_signature)
 
 
-def test_bpm_estimator_librosa(autio_path):
+def test_bpm_estimator_librosa(audio_path):
     """Test bpm_estimator_librosa"""
-    print(round(bpm_estimator_librosa(autio_path)[0]))
+    print(round(bpm_estimator_librosa(audio_path)[0]))
 
 
 def test_bpm_estimator_pretty_midi(mid_path):
@@ -45,18 +45,21 @@ def test_get_bpm_from_midi(mid_path):
     print(round(get_bpm_from_midi(mid_path)))
 
 
-def test_mido(mid_path, lyric_encode):
+def test_mido(mid_path, lyric_encode, print_bound=float("inf")):
     """Test mido
     ref: https://mido.readthedocs.io/en/stable/files/midi.html
     """
     mid = mido.MidiFile(mid_path)
-    print("type:", mid.type)
-    print("ticks_per_beat:", mid.ticks_per_beat)
-    print("duration:", mid.length)
+    print("[미디 파일 헤더]")
+    print("mid file type:", mid.type)
+    print("ticks per beat:", mid.ticks_per_beat)
+    print("total duration:", mid.length)
     time_signature = (4, 4)
     tempo = 120
     for i, track in enumerate(mid.tracks):
+        print()
         print(f"Track {i}: {track.name}")
+        print()
         total_time = 0
         total_time2 = 0
         for j, msg in enumerate(track):
@@ -64,37 +67,35 @@ def test_mido(mid_path, lyric_encode):
                 msg.time, ticks_per_beat=mid.ticks_per_beat, tempo=tempo
             )
             total_time2 += msg.time
-            if j > 25:
+            if j > print_bound:
                 continue
-            # if msg.is_meta:
-            #     print(i, j, msg)
-            if msg.type == "lyrics":
-                print("[가사]", msg, msg.bin()[3:].decode(lyric_encode))
+            if msg.type == "note_on":
+                print("┌노트 시작┐", msg)
+            elif msg.type == "note_off":
+                print("└노트 끝┘", msg)
+            elif msg.type == "lyrics":
+                print(f"  [가사] {msg.bin()[3:].decode(lyric_encode)} time={msg.time}")
             elif msg.type == "track_name":
-                print(
-                    "[트랙 이름]",
-                    msg,
-                )
-            elif msg.type == "tnstrument_name":
-                print(
-                    "[악기 이름]",
-                    msg,
-                )
+                print("[트랙 이름]", msg)
+            elif msg.type == "instrument_name":
+                print(f"[악기 이름] {msg.name} time={msg.time}")
+            elif msg.type == "smpte_offset":
+                print(f"[SMPTE] {msg}")
             elif msg.type == "key_signature":
-                print(
-                    "[조표]",
-                    msg,
-                )
+                print(f"[조표] {msg.key} time={msg.time}")
             elif msg.type == "time_signature":
-                print("[박자표]", msg, msg.numerator, msg.denominator)
+                print(
+                    f"[박자표] {msg.numerator}/{msg.denominator} 박자, "
+                    + f"clocks_per_click={msg.clocks_per_click}, "
+                    + f"notated_32nd_notes_per_beat={msg.notated_32nd_notes_per_beat}, "
+                    + f"time={msg.time}"
+                )
                 time_signature = (msg.numerator, msg.denominator)
             elif msg.type == "set_tempo":
                 tempo = round(mido.tempo2bpm(msg.tempo, time_signature=time_signature))
-                print("[템포]", msg, msg.tempo, tempo)
+                print(f"[템포] {msg.tempo}(BPM={tempo}) time={msg.time}")
             else:
                 print(
-                    i,
-                    j,
                     msg,
                     mid.ticks_per_beat,
                     tempo,
@@ -126,14 +127,16 @@ if __name__ == "__main__":
         },
     ]
 
+    # test_bpm_estimator_librosa(samples[0]["wav"])
+    # test_bpm_estimator_pretty_midi(samples[0]["mid"])
+    # test_get_bpm_from_midi(samples[0]["mid"])
+
     # for sample in samples:
-    #     # test_bpm_estimator_librosa(sample["wav"])
-    #     # test_bpm_estimator_pretty_midi(sample["mid"])
-    #     # test_get_bpm_from_midi(sample["mid"])
     #     print(
     #         f'{bpm_estimator_librosa(sample["wav"])[0]:.2f}'
     #         + f' {bpm_estimator_pretty_midi(sample["mid"]):.2f}'
     #         + f' {get_bpm_from_midi(sample["mid"]):.2f}'
     #     )
-    test_mido(samples[0]["mid"], lyric_encode="utf-8")
-    # test_mido(samples[2]["mid"], lyric_encode="euc-kr")
+
+    # test_mido(samples[0]["mid"], lyric_encode="utf-8", print_bound=25)
+    test_mido(samples[2]["mid"], lyric_encode="euc-kr", print_bound=20)
