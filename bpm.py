@@ -217,17 +217,12 @@ def statistics_estimated_bpm_error(path_obj, sample_num=None):
     by multiprocessing"""
 
     with mp.Pool(mp.cpu_count()) as p:
-        error_array = np.array(
-            p.starmap(
-                estimated_bpm_error,
-                random.sample(
-                    list(zip(path_obj.rglob("*.wav"), path_obj.rglob("*.mid"))),
-                    k=sample_num,
-                )
-                if sample_num
-                else zip(path_obj.rglob("*.wav"), path_obj.rglob("*.mid")),
-            )
-        )
+        samples = zip(path_obj.rglob("*.wav"), path_obj.rglob("*.mid"))
+        if sample_num:
+            samples = list(samples)
+            if sample_num < len(samples):
+                samples = random.sample(samples, k=sample_num)
+        error_array = np.array(p.starmap(estimated_bpm_error, samples))
 
     print(
         f"error(0); mean/std: {np.mean(error_array[:, 0]):5.2f}, {np.std(error_array[:, 0]):5.2f}"
