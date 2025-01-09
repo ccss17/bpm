@@ -1,7 +1,6 @@
 """Module for BPM estimating"""
 
 import sys
-import pathlib
 import multiprocessing as mp
 
 import numpy as np
@@ -29,18 +28,49 @@ def get_bpm_from_midi(midi_path):
     time_signature = (4, 4)  # default time signature
 
     if mid.type == 0:
-        for track in mid.tracks:
-            for msg in track:
-                if msg.type == "time_signature":
-                    time_signature = (msg.numerator, msg.denominator)
-                elif msg.type == "set_tempo":
-                    return mido.tempo2bpm(msg.tempo, time_signature=time_signature)
+        for msg in mid.tracks[0]:
+            if msg.type == "time_signature":
+                time_signature = (msg.numerator, msg.denominator)
+            elif msg.type == "set_tempo":
+                return mido.tempo2bpm(msg.tempo, time_signature=time_signature)
+    elif mid.type == 1:
+        tempo = 120  # default tempo
+        merged_track = mido.merge_tracks(mid.tracks)
+        lyric_note_num = 0
+        total_lyric_note_num = 0
+        tempo_mean_numerator = 0
+        first_tempo = True
+        for msg in merged_track:
+            if msg.type == "note_on" or msg.type == "note_off" or msg.type == "lyrics":
+                lyric_note_num += 1
+            elif msg.type == "set_tempo":
+                if first_tempo:
+                    first_tempo = False
+                else:
+                    tempo_mean_numerator += tempo * lyric_note_num
+                    total_lyric_note_num += lyric_note_num
+                tempo = round(mido.tempo2bpm(msg.tempo, time_signature=time_signature))
+                lyric_note_num = 0
+            elif msg.type == "time_signature":
+                time_signature = (msg.numerator, msg.denominator)
+            elif msg.type == "end_of_track":
+                tempo_mean_numerator += tempo * lyric_note_num
+                total_lyric_note_num += lyric_note_num
+        return tempo_mean_numerator / total_lyric_note_num
+    elif mid.type == 2:
+        raise NotImplementedError
+    else:
+        raise NotImplementedError
 
 
 def print_track(
     track, mid_file, print_bound_per_track=float("inf"), print_dominant_tempo=False
 ):
     """print track"""
+
+    def print_lyric_note_num(lyric_note_num):
+        print(" " * 8 + f"Total item num: {lyric_note_num}")
+
     # default setting
     time_signature = (4, 4)
     tempo = 120
@@ -48,7 +78,8 @@ def print_track(
 
     total_time = 0
     total_time2 = 0
-    item_num = 0
+    lyric_note_num = 0
+    first_tempo = True
     for i, msg in enumerate(track):
         total_time += mido.tick2second(
             msg.time, ticks_per_beat=mid_file.ticks_per_beat, tempo=tempo
@@ -57,21 +88,30 @@ def print_track(
         if i > print_bound_per_track:
             continue
         if msg.type == "note_on":
-            item_num += 1
+            lyric_note_num += 1
             if not print_dominant_tempo:
                 print(
                     f"{i:4} ┌note on ┐ {pretty_midi.note_number_to_name(msg.note)} ({msg})",
                 )
         elif msg.type == "note_off":
-            item_num += 1
+            lyric_note_num += 1
             if not print_dominant_tempo:
                 print(
                     f"{i:4} └note off┘ {pretty_midi.note_number_to_name(msg.note)} ({msg})",
                 )
+        elif msg.type == "set_tempo":
+            if not first_tempo:
+                print_lyric_note_num(lyric_note_num)
+            else:
+                first_tempo = False
+            tempo = round(mido.tempo2bpm(msg.tempo, time_signature=time_signature))
+            print(f"{i:4} [Tempo] BPM={tempo} (time={msg.time})")
+            lyric_note_num = 0
         elif msg.type == "end_of_track":
+            print_lyric_note_num(lyric_note_num)
             print(f"{i:4} [End of Track] (time={msg.time})")
         elif msg.type == "lyrics":
-            item_num += 1
+            lyric_note_num += 1
             if not print_dominant_tempo:
                 try:
                     print(
@@ -98,20 +138,19 @@ def print_track(
                 + f"time={msg.time})",
             )
             time_signature = (msg.numerator, msg.denominator)
-        elif msg.type == "set_tempo":
-            if print_dominant_tempo:
-                print(" " * 8 + f"Total item num: {item_num}")
-            tempo = round(mido.tempo2bpm(msg.tempo, time_signature=time_signature))
-            print(f"{i:4} [Tempo] BPM={tempo} (time={msg.time})")
-            item_num = 0
         else:
             print(i, msg)
-    print("(test)total ticks", total_time)
-    print("(test)total ticks2", total_time2)
+    # print("(test)total ticks", total_time)
+    # print("(test)total ticks2", total_time2)
     print("lyric encode:", lyric_encode)
 
 
-def analysis_midi(midi_path, print_bound_per_track=float("inf")):
+def analysis_midi(
+    midi_path,
+    print_bound_per_track=float("inf"),
+    print_dominant_tempo=False,
+    convert_1_to_0=False,
+):
     """Function to analysis mid file
     ref: https://mido.readthedocs.io/en/stable/files/midi.html
     """
@@ -124,24 +163,12 @@ def analysis_midi(midi_path, print_bound_per_track=float("inf")):
     print("ticks per beat:", mid.ticks_per_beat)
     print("total duration:", mid.length)
 
+    if mid.type == 1 and convert_1_to_0:
+        mid.tracks = [mido.merge_tracks(mid.tracks)]
+
     for i, track in enumerate(mid.tracks):
         print(f"\nTrack {i}: {track.name}\n")
-        print_track(track, mid, print_bound_per_track)
-
-
-def test_bpm_estimator_librosa(audio_path):
-    """Test bpm_estimator_librosa"""
-    print(round(bpm_estimator_librosa(audio_path)[0]))
-
-
-def test_bpm_estimator_pretty_midi(midi_path):
-    """Test bpm_estimator_pretty_midi"""
-    print(round(bpm_estimator_pretty_midi(midi_path)))
-
-
-def test_get_bpm_from_midi(midi_path):
-    """Test get_bpm_from_midi"""
-    print(round(get_bpm_from_midi(midi_path)))
+        print_track(track, mid, print_bound_per_track, print_dominant_tempo)
 
 
 def estimated_bpm_error(audio_path, midi_path):
@@ -196,74 +223,7 @@ def statistics_estimated_bpm_error(path_obj):
             )
         )
 
-    print(np.mean(error_array[:, 0]), np.std(error_array[:, 0]))
-    print(np.mean(error_array[:, 1]), np.std(error_array[:, 1]))
-    print(np.mean(error_array[:, 2]), np.std(error_array[:, 2]))
-    print(np.mean(error_array[:, 3]), np.std(error_array[:, 3]))
-
-
-def test_convert_midi_format_1_to_0(midi_path):
-    """test
-    ref: https://stackoverflow.com/questions/55431137/
-    how-to-convert-midi-type-1-files-to-midi-type-0-in-python-or-command-line"""
-    mid = mido.MidiFile(midi_path)
-    mido.merge_tracks(mid.tracks)
-    print_track(mido.merge_tracks(mid.tracks), mid, print_dominant_tempo=True)
-
-
-if __name__ == "__main__":
-    samples = [
-        {
-            "wav": "sample/SINGER_66_30TO49_HUSKY_MALE_DANCE_C2835.wav",
-            "mid": "sample/SINGER_66_30TO49_HUSKY_MALE_DANCE_C2835.mid",
-        },
-        {
-            "wav": "sample/SINGER_16_10TO29_CLEAR_FEMALE_BALLAD_C0632.wav",
-            "mid": "sample/SINGER_16_10TO29_CLEAR_FEMALE_BALLAD_C0632.mid",
-        },
-        {
-            "wav": "sample/ba_05688_-4_a_s02_m_02.wav",
-            "mid": "sample/ba_05688_-4_a_s02_m_02.mid",
-        },
-        {
-            "wav": "sample/ba_09303_+0_a_s02_m_02.wav",
-            "mid": "sample/ba_09303_+0_a_s02_m_02.mid",
-        },
-    ]
-
-    # test_bpm_estimator_librosa(samples[0]["wav"])
-    # test_bpm_estimator_pretty_midi(samples[0]["mid"])
-    # test_get_bpm_from_midi(samples[0]["mid"])
-
-    # for sample in samples:
-    #     print(
-    #         f'{bpm_estimator_librosa(sample["wav"])[0]:.2f}'
-    #         + f' {bpm_estimator_pretty_midi(sample["mid"]):.2f}'
-    #         + f' {get_bpm_from_midi(sample["mid"]):.2f}'
-    #     )
-
-    # print(bpm_estimator_librosa(samples[2]["wav"])[0])
-
-    # analysis_midi(samples[0]["mid"], print_bound_per_track=25)
-    # analysis_midi(samples[2]["mid"], print_bound_per_track=40)
-    # analysis_midi(samples[3]["mid"], print_bound_per_track=20)
-    # analysis_midi(samples[0]["mid"])
-    # analysis_midi(samples[1]["mid"])
-    # analysis_midi(samples[2]["mid"])
-    # analysis_midi(samples[3]["mid"])
-
-    # print()
-
-    # test_convert_midi_format_1_to_0(samples[2]["mid"])
-    data_path = pathlib.Path("dataset/가창자_s02")
-    for i, mid_path in enumerate(data_path.rglob("*.mid")):
-        if i == 4:
-            test_convert_midi_format_1_to_0(mid_path)
-            print()
-            print(mid_path)
-
-    # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
-    # data_path = pathlib.Path("d:/dataset/177.다음색 가이드보컬 데이터")
-    # data_path = pathlib.Path("dataset/SINGER_16")
-    # data_path = pathlib.Path("dataset/가창자_s02")
-    # statistics_estimated_bpm_error(data_path)
+    print(f"{np.mean(error_array[:, 0]):5.2f}, {np.std(error_array[:, 0]):5.2f}")
+    print(f"{np.mean(error_array[:, 1]):5.2f}, {np.std(error_array[:, 1]):5.2f}")
+    print(f"{np.mean(error_array[:, 2]):5.2f}, {np.std(error_array[:, 2]):5.2f}")
+    print(f"{np.mean(error_array[:, 3]):5.2f}, {np.std(error_array[:, 3]):5.2f}")
