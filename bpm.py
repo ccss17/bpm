@@ -2,6 +2,7 @@
 
 import sys
 import multiprocessing as mp
+import random
 
 import numpy as np
 import librosa
@@ -211,7 +212,7 @@ def estimated_bpm_error(audio_path, midi_path):
     )
 
 
-def statistics_estimated_bpm_error(path_obj):
+def statistics_estimated_bpm_error(path_obj, sample_num=None):
     """Function to get statistics of errors of estimated bpm
     by multiprocessing"""
 
@@ -219,11 +220,24 @@ def statistics_estimated_bpm_error(path_obj):
         error_array = np.array(
             p.starmap(
                 estimated_bpm_error,
-                zip(path_obj.rglob("*.wav"), path_obj.rglob("*.mid")),
+                random.sample(
+                    list(zip(path_obj.rglob("*.wav"), path_obj.rglob("*.mid"))),
+                    k=sample_num,
+                )
+                if sample_num
+                else zip(path_obj.rglob("*.wav"), path_obj.rglob("*.mid")),
             )
         )
 
-    print(f"{np.mean(error_array[:, 0]):5.2f}, {np.std(error_array[:, 0]):5.2f}")
-    print(f"{np.mean(error_array[:, 1]):5.2f}, {np.std(error_array[:, 1]):5.2f}")
-    print(f"{np.mean(error_array[:, 2]):5.2f}, {np.std(error_array[:, 2]):5.2f}")
-    print(f"{np.mean(error_array[:, 3]):5.2f}, {np.std(error_array[:, 3]):5.2f}")
+    print(
+        f"error(0); mean/std: {np.mean(error_array[:, 0]):5.2f}, {np.std(error_array[:, 0]):5.2f}"
+    )
+    print(
+        f"error(2); mean/std: {np.mean(error_array[:, 1]):5.2f}, {np.std(error_array[:, 1]):5.2f}"
+    )
+    print(
+        f"error(4); mean/std: {np.mean(error_array[:, 2]):5.2f}, {np.std(error_array[:, 2]):5.2f}"
+    )
+    print(
+        f"error(8); mean/std: {np.mean(error_array[:, 3]):5.2f}, {np.std(error_array[:, 3]):5.2f}"
+    )
