@@ -74,57 +74,65 @@ def print_track(
 
     # default setting
     time_signature = (4, 4)
-    tempo = 120
+    bpm = 120
+    tempo = 500000
     lyric_encode = "utf-8"
 
     total_time = 0
-    total_time2 = 0
     lyric_note_num = 0
     first_tempo = True
     for i, msg in enumerate(track):
-        total_time += mido.tick2second(
-            msg.time, ticks_per_beat=mid_file.ticks_per_beat, tempo=tempo
-        )
-        total_time2 += msg.time
         if i > print_bound_per_track:
             continue
         if msg.type == "note_on":
             lyric_note_num += 1
+            time = mido.tick2second(
+                msg.time, ticks_per_beat=mid_file.ticks_per_beat, tempo=tempo
+            )
+            total_time += time
             if not print_dominant_tempo:
                 print(
-                    f"{i:4} ┌note on ┐ {pretty_midi.note_number_to_name(msg.note)} ({msg})",
+                    f"{i:4} ┌note on ┐ {pretty_midi.note_number_to_name(msg.note)} {time:.2f}/{total_time:.2f} ({msg})",
                 )
         elif msg.type == "note_off":
             lyric_note_num += 1
+            time = mido.tick2second(
+                msg.time, ticks_per_beat=mid_file.ticks_per_beat, tempo=tempo
+            )
+            total_time += time
             if not print_dominant_tempo:
                 print(
-                    f"{i:4} └note off┘ {pretty_midi.note_number_to_name(msg.note)} ({msg})",
+                    f"{i:4} └note off┘ {pretty_midi.note_number_to_name(msg.note)} {time:.2f}/{total_time:.2f} ({msg})",
                 )
         elif msg.type == "set_tempo":
             if not first_tempo:
                 print_lyric_note_num(lyric_note_num)
             else:
                 first_tempo = False
-            tempo = round(mido.tempo2bpm(msg.tempo, time_signature=time_signature))
-            print(f"{i:4} [Tempo] BPM={tempo} (time={msg.time})")
+            bpm = round(mido.tempo2bpm(msg.tempo, time_signature=time_signature))
+            print(f"{i:4} [Tempo] {msg.tempo} BPM={bpm} (time={msg.time})")
             lyric_note_num = 0
         elif msg.type == "end_of_track":
             print_lyric_note_num(lyric_note_num)
             print(f"{i:4} [End of Track] (time={msg.time})")
         elif msg.type == "lyrics":
             lyric_note_num += 1
+            time = mido.tick2second(
+                msg.time, ticks_per_beat=mid_file.ticks_per_beat, tempo=tempo
+            )
+            total_time += time
             if not print_dominant_tempo:
                 try:
                     print(
-                        f"{i:4} │ lyrics │ {msg.bin()[3:].decode(lyric_encode)} (time={msg.time})",
+                        f"{i:4} │ lyrics │ {msg.bin()[3:].decode(lyric_encode)} {time:.2f}/{total_time:.2f}",
                     )
                 except UnicodeDecodeError:
                     lyric_encode = "euc-kr"
         elif msg.type == "channel_prefix":
             print(f"{i:4} [Channel Prefix] channel={msg.channel} (time={msg.time})")
         elif msg.type == "track_name":
-            pass  # Track information was already printed
-            # print("[Track name]", msg, msg.bin()[3:].decode(lyric_encode))
+            print(f"{i:4} [Track name] {msg} {msg.bin()[3:].decode(lyric_encode)}")
+            # pass  # Track information was already printed
         elif msg.type == "instrument_name":
             print(f"{i:4} [Instrument Name] {msg.name} (time={msg.time})")
         elif msg.type == "smpte_offset":
@@ -141,8 +149,7 @@ def print_track(
             time_signature = (msg.numerator, msg.denominator)
         else:
             print(i, msg)
-    # print("(test)total ticks", total_time)
-    # print("(test)total ticks2", total_time2)
+    print("total time", total_time)
     print("lyric encode:", lyric_encode)
 
 

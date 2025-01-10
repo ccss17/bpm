@@ -63,10 +63,10 @@ if __name__ == "__main__":
     #         + f' {bpm.get_bpm_from_midi(sample["mid"]):.2f}'
     #     )
 
-    # bpm.analysis_midi(samples[0]["mid"], print_bound_per_track=25)
+    # bpm.analysis_midi(samples[0]["mid"], print_bound_per_track=15)
     # bpm.analysis_midi(samples[2]["mid"], print_bound_per_track=40)
     # bpm.analysis_midi(samples[3]["mid"], print_bound_per_track=20)
-    # bpm.analysis_midi(samples[0]["mid"])
+    bpm.analysis_midi(samples[0]["mid"])
     # bpm.analysis_midi(samples[1]["mid"])
     # bpm.analysis_midi(samples[2]["mid"])
     # bpm.analysis_midi(samples[3]["mid"], print_dominant_tempo=True, convert_1_to_0=True)
@@ -74,6 +74,12 @@ if __name__ == "__main__":
     #     samples[3]["mid"], print_dominant_tempo=False, convert_1_to_0=True
     # )
     # test_get_bpm_from_midi(samples[3]["mid"])
+
+    # x = 520
+    # print(mido.tick2second(2000, x, 508475))
+    # print(mido.tick2second(2267, x, 508475))
+    # print(mido.tick2second(2280, x, 508475))
+    # print(mido.tick2second(2340, x, 508475))
 
     # test_convert_midi_format_1_to_0(samples[2]["mid"])
     # data_path = pathlib.Path("dataset/가창자_s02")
@@ -88,12 +94,12 @@ if __name__ == "__main__":
     # data_path = pathlib.Path("dataset/가창자_s02")
     # bpm.statistics_estimated_bpm_error(data_path)
 
-    data_path = pathlib.Path("d:/dataset/177.다음색 가이드보컬 데이터")
-    print(data_path)
-    bpm.statistics_estimated_bpm_error(data_path)
-    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
-    print(data_path)
-    bpm.statistics_estimated_bpm_error(data_path)
+    # data_path = pathlib.Path("d:/dataset/177.다음색 가이드보컬 데이터")
+    # print(data_path)
+    # bpm.statistics_estimated_bpm_error(data_path)
+    # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    # print(data_path)
+    # bpm.statistics_estimated_bpm_error(data_path)
     # Output:
     # d:\dataset\177.다음색 가이드보컬 데이터
     # error(0); mean/std: 42.13, 35.27
