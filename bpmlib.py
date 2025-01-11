@@ -73,7 +73,7 @@ def get_bpm_from_midi(midi_path):
     """Function to extract BPM information from midi file"""
     mid = mido.MidiFile(midi_path)
 
-    if mid.type == 0 or mid.type == 1:
+    if mid.type == 0:
         return _bpm_from_midi_format_0(mid)
     elif mid.type == 1:
         return _bpm_from_midi_format_1(mid)
