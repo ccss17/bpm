@@ -1,4 +1,5 @@
 dataset/
+test*
 test.*
 !test.py
 *.exe
