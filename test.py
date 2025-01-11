@@ -40,9 +40,9 @@ def test_create_sample_midi1(midi_path):
     mid.tracks.append(track)
 
     track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
-    track.append(mido.Message("note_on", note=64, velocity=64, time=4))
+    track.append(mido.Message("note_on", note=64, velocity=127, time=4))
     track.append(mido.Message("note_off", note=64, velocity=127, time=8))
-    track.append(mido.Message("note_on", note=74, velocity=64, time=4))
+    track.append(mido.Message("note_on", note=74, velocity=127, time=4))
     track.append(mido.Message("note_off", note=74, velocity=127, time=8))
     track.append(mido.MetaMessage("end_of_track", time=8))
 
@@ -126,13 +126,11 @@ if __name__ == "__main__":
     # BPM ESTIMATOR vs BPM FROM MIDI
     #
     # test_bpm_estimator_librosa(samples[0]["wav"])
-    # test_bpm_estimator_pretty_midi(samples[0]["mid"])
     # test_get_bpm_from_midi(samples[0]["mid"])
 
     # for sample in samples:
     #     print(
     #         f'{bpmlib.bpm_estimator_librosa(sample["wav"])[0]:.2f}'
-    #         + f' {bpmlib.bpm_estimator_pretty_midi(sample["mid"]):.2f}'
     #         + f' {bpmlib.get_bpm_from_midi(sample["mid"]):.2f}'
     #     )
 
@@ -149,9 +147,14 @@ if __name__ == "__main__":
     #
     # CONVERT MIDI FORMAT 1 TO 0
     #
-    # bpmlib.analysis_midi(samples[3]["mid"], blind_note_lyrics=True, convert_1_to_0=True)
     # bpmlib.analysis_midi(
-    #     samples[3]["mid"], blind_note_lyrics=False, convert_1_to_0=True
+    #     "sample/underestimated_bpm/ba_05206_+0_a_s14_f_03.mid",
+    #     blind_note_lyrics=False,
+    #     convert_1_to_0=True,
+    # )
+    # bpmlib.analysis_midi(samples[2]["mid"], blind_note_lyrics=True, convert_1_to_0=True)
+    # bpmlib.analysis_midi(
+    #     samples[2]["mid"], blind_note_lyrics=False, convert_1_to_0=True
     # )
     # data_path = pathlib.Path("dataset/가창자_s02")
     # for i, mid_path in enumerate(data_path.rglob("*.mid")):
@@ -195,7 +198,9 @@ if __name__ == "__main__":
     # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
     # print(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path)
+    #
     # Output:
+    #
     # d:\dataset\177.다음색 가이드보컬 데이터
     # error(0); mean/std: 42.13, 35.27
     # error(2); mean/std:  4.39,  7.71
@@ -209,7 +214,6 @@ if __name__ == "__main__":
     #   error(*2): 29
     #   error(*4): 0
     #   error(*8): 0
-
     # d:\dataset\004.다화자 가창 데이터
     # error(0); mean/std: 38.97, 36.49
     # error(2); mean/std:  6.16,  8.72
@@ -223,3 +227,19 @@ if __name__ == "__main__":
     #   error(*2): 77
     #   error(*4): 0
     #   error(*8): 0
+
+    #
+    # bpm error samples
+    #
+    # underestimated bpm(/2) sample:
+    #   SINGER_14_10TO29_NORMAL_FEMALE_DANCE_C0555.wav
+    #   [estimated bpm]=78.30, [bpm from midi file]=120.0
+    # underestimated bpm(/2) sample:
+    #   ba_05206_+0_a_s14_f_03.wav
+    #   [estimated bpm]=95.70, [bpm from midi file]=203.98
+    # overestimated bpm(*2) sample:
+    #   SINGER_12_10TO29_CLEAR_FEMALE_DANCE_C0477.wav
+    #   [estimated bpm]=215.33, [bpm from midi file]=120.0
+    # overestimated bpm(*2) sample:
+    #   ba_06573_-1_a_s09_m_03.wav
+    #   [estimated bpm]=112.34, [bpm from midi file]=63.23

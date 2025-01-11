@@ -1,0 +1,52 @@
+{
+	"기본정보": {
+		"Language": "KOR",
+		"Version": "nia2021_1.0",
+		"ApplicationCategory": "N/A",
+		"NumberOfSpeaker": "09",
+		"NumberOfUtterance": "1",
+		"DataCategory": "sing",
+		"RecordingDate": "2021-10-11",
+		"FillingDate": "N/A",
+		"RevisionHistory": "-1",
+		"Distributor": "Mediazen"
+	},
+	"음성정보": {
+		"SamplingRate": "48000",
+		"NumberOfBit": "16",
+		"ByteOrder": "N/A",
+		"EncodingLaw": "Wave",
+		"NumberOfChannel": "1"
+	},
+	"전사정보": {
+		"LabelText": "너를 보내고",
+		"Lyrics": "구름 낀 하늘은"
+	},
+	"화자정보": {
+		"SpeakerName": "s09",
+		"Gender": "m",
+		"Age": "03",
+		"Genre": "tr",
+		"Professional": "a",
+		"Skill": [
+			"Ballad", "Trot"
+		]
+	},
+	"음악정보": {
+		"SongNumber": "06573",
+		"SongGenre": "발라드"
+	},
+	"파일정보": {
+		"FileCategory": "Audio",
+		"FileName": "ba_06573_-1_a_s09_m_03",
+		"DirectoryPath": "N/A",
+		"HeaderSize": "N/A",
+		"FileLength": "N/A",
+		"FileFormat": "PCM",
+		"NumberOfRepeat": "1",
+		"TimeInterval": "N/A"
+	},
+	"기타정보": {
+		"QualityStatus": "Good"
+	}
+}

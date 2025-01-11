@@ -1,0 +1,52 @@
+{
+	"기본정보": {
+		"Language": "KOR",
+		"Version": "nia2021_1.0",
+		"ApplicationCategory": "N/A",
+		"NumberOfSpeaker": "14",
+		"NumberOfUtterance": "1",
+		"DataCategory": "sing",
+		"RecordingDate": "2021-08-25",
+		"FillingDate": "N/A",
+		"RevisionHistory": "0",
+		"Distributor": "Mediazen"
+	},
+	"음성정보": {
+		"SamplingRate": "48000",
+		"NumberOfBit": "16",
+		"ByteOrder": "N/A",
+		"EncodingLaw": "Wave",
+		"NumberOfChannel": "1"
+	},
+	"전사정보": {
+		"LabelText": "겨울 장미",
+		"Lyrics": "철이 없어 그 땐 몰랐어요"
+	},
+	"화자정보": {
+		"SpeakerName": "s14",
+		"Gender": "f",
+		"Age": "03",
+		"Genre": "ba",
+		"Professional": "a",
+		"Skill": [
+			"Ballad", "Trot"
+		]
+	},
+	"음악정보": {
+		"SongNumber": "05206",
+		"SongGenre": "발라드"
+	},
+	"파일정보": {
+		"FileCategory": "Audio",
+		"FileName": "ba_05206_+0_a_s14_f_03",
+		"DirectoryPath": "N/A",
+		"HeaderSize": "N/A",
+		"FileLength": "N/A",
+		"FileFormat": "PCM",
+		"NumberOfRepeat": "1",
+		"TimeInterval": "N/A"
+	},
+	"기타정보": {
+		"QualityStatus": "Good"
+	}
+}
