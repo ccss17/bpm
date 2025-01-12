@@ -83,8 +83,24 @@ def get_bpm_from_midi(midi_path):
         raise NotImplementedError
 
 
+def patch_lyric(
+    midi_path,
+):
+    """F"""
+    mid = mido.MidiFile(midi_path)
+    for track in mid.tracks:
+        for msg in track:
+            if msg.type == "lyrics":
+                # msg.text = "a"
+                msg.time = 0
+                msg.text = msg.bin()[3:].decode("utf-8").encode("utf-8").decode("utf-8")
+                # msg.text = '가'
+
+    return mid
+
+
 def print_track(
-    track, mid_file, print_bound_per_track=float("inf"), blind_note_lyrics=False
+    track, ticks_per_beat, print_bound_per_track=float("inf"), blind_note_lyrics=False
 ):
     """print track"""
 
@@ -106,7 +122,7 @@ def print_track(
         if msg.type == "note_on":
             lyric_note_num += 1
             time = mido.tick2second(
-                msg.time, ticks_per_beat=mid_file.ticks_per_beat, tempo=tempo
+                msg.time, ticks_per_beat=ticks_per_beat, tempo=tempo
             )
             total_time += time
             if not blind_note_lyrics:
@@ -116,7 +132,7 @@ def print_track(
         elif msg.type == "note_off":
             lyric_note_num += 1
             time = mido.tick2second(
-                msg.time, ticks_per_beat=mid_file.ticks_per_beat, tempo=tempo
+                msg.time, ticks_per_beat=ticks_per_beat, tempo=tempo
             )
             total_time += time
             if not blind_note_lyrics:
@@ -126,7 +142,7 @@ def print_track(
         elif msg.type == "lyrics":
             lyric_note_num += 1
             time = mido.tick2second(
-                msg.time, ticks_per_beat=mid_file.ticks_per_beat, tempo=tempo
+                msg.time, ticks_per_beat=ticks_per_beat, tempo=tempo
             )
             total_time += time
             if not blind_note_lyrics:
@@ -136,6 +152,9 @@ def print_track(
                     )
                 except UnicodeDecodeError:
                     lyric_encode = "euc-kr"
+                    print(
+                        f"{i:4} │ lyrics │ {msg.bin()[3:].decode(lyric_encode)} {time:.2f}/{total_time:.2f} (time={msg.time})",
+                    )
         elif msg.type == "set_tempo":
             if not first_tempo:
                 print_lyric_note_num(lyric_note_num)
@@ -146,9 +165,9 @@ def print_track(
             print(f"{i:4} [Tempo] {msg.tempo} BPM={bpm} (time={msg.time})")
             lyric_note_num = 0
         elif msg.type == "end_of_track":
-            total_time += mido.tick2second(
-                msg.time, ticks_per_beat=mid_file.ticks_per_beat, tempo=tempo
-            )
+            # total_time += mido.tick2second(
+            #     msg.time, ticks_per_beat=ticks_per_beat, tempo=tempo
+            # )
             print_lyric_note_num(lyric_note_num)
             print(f"{i:4} [End of Track] (time={msg.time})")
         elif msg.type == "channel_prefix":
@@ -177,7 +196,7 @@ def print_track(
         print("lyric encode:", lyric_encode)
 
 
-def analysis_midi(
+def analysis_midi_file(
     midi_path,
     print_bound_per_track=float("inf"),
     blind_note_lyrics=False,
@@ -189,23 +208,45 @@ def analysis_midi(
     sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
 
     print(f"ANALYSIS MIDI FILE: {midi_path}")
-    # print header information of midi file
     mid = mido.MidiFile(midi_path)
+    return analysis_midi(
+        mid,
+        print_bound_per_track,
+        blind_note_lyrics,
+        convert_1_to_0,
+    )
+
+
+def analysis_midi(
+    mid_obj,
+    print_bound_per_track=float("inf"),
+    blind_note_lyrics=False,
+    convert_1_to_0=False,
+):
+    """Function to analysis midi object"""
+    sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
+
+    # print header information of midi file
     print("[MIDI File Header]")
-    print("mid file type:", mid.type)
-    print("ticks per beat:", mid.ticks_per_beat)
-    print("total duration:", mid.length)
+    print("mid file type:", mid_obj.type)
+    print("ticks per beat:", mid_obj.ticks_per_beat)
+    print("total duration:", mid_obj.length)
 
-    if mid.type == 1 and convert_1_to_0:
-        mid.tracks = [mido.merge_tracks(mid.tracks)]
+    if mid_obj.type == 1 and convert_1_to_0:
+        mid_obj.tracks = [mido.merge_tracks(mid_obj.tracks)]
 
-    for i, track in enumerate(mid.tracks):
+    for i, track in enumerate(mid_obj.tracks):
         print(f"\nTrack {i}: {track.name}\n")
-        print_track(track, mid, print_bound_per_track, blind_note_lyrics)
+        print_track(
+            track, mid_obj.ticks_per_beat, print_bound_per_track, blind_note_lyrics
+        )
+
+    return mid_obj
 
 
 def estimated_bpm_error(audio_path, midi_path):
     """Function to calculate error of estimated bpm"""
+    assert midi_path.name.split(".")[0] == audio_path.name.split(".")[0]
     estimated_bpm = bpm_estimator_librosa(audio_path)[0]
     bpm_from_midi_file = get_bpm_from_midi(midi_path)
 

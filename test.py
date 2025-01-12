@@ -2,9 +2,9 @@
 
 import pathlib
 
-import mido
-
 import bpmlib
+
+import mido
 
 
 def test_bpm_estimator_librosa(audio_path):
@@ -29,7 +29,9 @@ def test_convert_midi_format_1_to_0(midi_path, blind_note_lyrics=True):
     mid = mido.MidiFile(midi_path)
     merged_track = mido.merge_tracks(mid.tracks)
     print(f"\nTrack 0: {merged_track.name}\n")
-    bpmlib.print_track(merged_track, mid, blind_note_lyrics=blind_note_lyrics)
+    bpmlib.print_track(
+        merged_track, mid.ticks_per_beat, blind_note_lyrics=blind_note_lyrics
+    )
 
 
 def test_create_sample_midi1(midi_path):
@@ -102,6 +104,143 @@ def test_create_sample_midi4(midi_path):
     mid.save(midi_path)
 
 
+def test_create_sample_midi5(midi_path):
+    """test_sample_midi"""
+    mid = mido.MidiFile()
+    mid.ticks_per_beat = 2
+    track = mido.MidiTrack()
+    mid.tracks.append(track)
+
+    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(mido.Message("note_on", note=64, velocity=64, time=4))
+    track.append(mido.MetaMessage("lyrics", text="a", time=10))
+    track.append(mido.MetaMessage("lyrics", text="b", time=4))
+    track.append(mido.Message("note_off", note=64, velocity=127, time=8))
+    track.append(mido.MetaMessage("lyrics", text="c", time=10))
+    track.append(mido.Message("note_on", note=64, velocity=64, time=4))
+    track.append(mido.Message("note_off", note=64, velocity=127, time=8))
+    track.append(mido.MetaMessage("lyrics", text="d", time=10))
+    track.append(mido.Message("note_on", note=64, velocity=64, time=4))
+    track.append(mido.MetaMessage("lyrics", text="e", time=10))
+    track.append(mido.Message("note_off", note=64, velocity=127, time=8))
+    track.append(mido.MetaMessage("lyrics", text="f", time=10))
+
+    mid.save(midi_path)
+
+
+def test_create_sample_midi6(midi_path):
+    """test_sample_midi"""
+    mid = mido.MidiFile()
+    mid.ticks_per_beat = 1
+    track = mido.MidiTrack()
+    mid.tracks.append(track)
+
+    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(mido.Message("note_on", note=61, velocity=64, time=0))
+    track.append(mido.Message("note_off", note=61, velocity=127, time=1))
+
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="1a", time=0))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="1b", time=1))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="1c", time=2))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="1d", time=3))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="1e", time=4))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="1f", time=5))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+
+    track.append(mido.Message("note_on", note=63, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="2a", time=0))
+    track.append(mido.Message("note_off", note=63, velocity=127, time=2))
+    track.append(mido.Message("note_on", note=63, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="2b", time=1))
+    track.append(mido.Message("note_off", note=63, velocity=127, time=2))
+    track.append(mido.Message("note_on", note=63, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="2c", time=2))
+    track.append(mido.Message("note_off", note=63, velocity=127, time=2))
+    track.append(mido.Message("note_on", note=63, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="2d", time=3))
+    track.append(mido.Message("note_off", note=63, velocity=127, time=2))
+    track.append(mido.Message("note_on", note=63, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="2e", time=4))
+    track.append(mido.Message("note_off", note=63, velocity=127, time=2))
+    track.append(mido.Message("note_on", note=63, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="2f", time=5))
+    track.append(mido.Message("note_off", note=63, velocity=127, time=2))
+
+    track.append(mido.Message("note_on", note=64, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="3a", time=0))
+    track.append(mido.Message("note_off", note=64, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=64, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="3b", time=0))
+    track.append(mido.Message("note_off", note=64, velocity=127, time=2))
+    track.append(mido.Message("note_on", note=64, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="3c", time=0))
+    track.append(mido.Message("note_off", note=64, velocity=127, time=3))
+    track.append(mido.Message("note_on", note=64, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="3d", time=0))
+    track.append(mido.Message("note_off", note=64, velocity=127, time=4))
+    track.append(mido.Message("note_on", note=64, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="3e", time=0))
+    track.append(mido.Message("note_off", note=64, velocity=127, time=5))
+
+    track.append(mido.Message("note_on", note=65, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="4a", time=0))
+    track.append(mido.MetaMessage("lyrics", text="4b", time=0))
+    track.append(mido.Message("note_off", note=65, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=65, velocity=66, time=1))
+    track.append(mido.MetaMessage("lyrics", text="4c", time=0))
+    track.append(mido.MetaMessage("lyrics", text="4d", time=1))
+    track.append(mido.Message("note_off", note=65, velocity=127, time=2))
+    track.append(mido.Message("note_on", note=65, velocity=66, time=2))
+    track.append(mido.MetaMessage("lyrics", text="4e", time=1))
+    track.append(mido.MetaMessage("lyrics", text="4f", time=0))
+    track.append(mido.Message("note_off", note=65, velocity=127, time=3))
+    track.append(mido.Message("note_on", note=65, velocity=66, time=3))
+    track.append(mido.MetaMessage("lyrics", text="4g", time=1))
+    track.append(mido.MetaMessage("lyrics", text="4h", time=1))
+    track.append(mido.Message("note_off", note=65, velocity=127, time=3))
+    track.append(mido.Message("note_on", note=65, velocity=66, time=4))
+    track.append(mido.MetaMessage("lyrics", text="4i", time=1))
+    track.append(mido.MetaMessage("lyrics", text="4j", time=2))
+    track.append(mido.Message("note_off", note=65, velocity=127, time=3))
+
+    track.append(mido.Message("note_on", note=66, velocity=66, time=0))
+    track.append(mido.Message("note_off", note=66, velocity=127, time=1))
+    track.append(mido.MetaMessage("lyrics", text="5a", time=0))
+    track.append(mido.Message("note_on", note=67, velocity=66, time=0))
+    track.append(mido.Message("note_off", note=67, velocity=127, time=2))
+    track.append(mido.MetaMessage("lyrics", text="5b", time=0))
+    track.append(mido.Message("note_on", note=68, velocity=66, time=0))
+    track.append(mido.Message("note_off", note=68, velocity=127, time=1))
+    track.append(mido.MetaMessage("lyrics", text="5c", time=1))
+    track.append(mido.Message("note_on", note=69, velocity=66, time=0))
+    track.append(mido.Message("note_off", note=69, velocity=127, time=2))
+    track.append(mido.MetaMessage("lyrics", text="5d", time=1))
+    track.append(mido.Message("note_on", note=70, velocity=66, time=0))
+    track.append(mido.Message("note_off", note=70, velocity=127, time=1))
+    track.append(mido.MetaMessage("lyrics", text="5e", time=2))
+    track.append(mido.Message("note_on", note=71, velocity=66, time=0))
+    track.append(mido.Message("note_off", note=71, velocity=127, time=2))
+    track.append(mido.MetaMessage("lyrics", text="5f", time=2))
+    track.append(mido.Message("note_on", note=72, velocity=66, time=0))
+    track.append(mido.Message("note_off", note=72, velocity=127, time=2))
+    track.append(mido.MetaMessage("lyrics", text="5g", time=2))
+    track.append(mido.Message("note_on", note=73, velocity=66, time=1))
+    track.append(mido.Message("note_off", note=73, velocity=127, time=2))
+
+    mid.save(midi_path)
+
+
 if __name__ == "__main__":
     samples = [
         {
@@ -137,23 +276,30 @@ if __name__ == "__main__":
     #
     # ANALYSIS MIDI FILE
     #
-    # bpmlib.analysis_midi(samples[0]["mid"], print_bound_per_track=15)
-    # bpmlib.analysis_midi(samples[2]["mid"], print_bound_per_track=40)
-    # bpmlib.analysis_midi(samples[3]["mid"], print_bound_per_track=20)
-    # bpmlib.analysis_midi(samples[0]["mid"])
-    # bpmlib.analysis_midi(samples[1]["mid"])
-    # bpmlib.analysis_midi(samples[2]["mid"])
+    # bpmlib.analysis_midi_file(samples[0]["mid"], print_bound_per_track=55)
+    # bpmlib.analysis_midi_file(samples[2]["mid"], print_bound_per_track=40)
+    # bpmlib.analysis_midi_file(samples[3]["mid"], print_bound_per_track=20)
+    # bpmlib.analysis_midi_file(samples[0]["mid"])
+    # bpmlib.analysis_midi_file(samples[1]["mid"])
+    # mid = bpmlib.analysis_midi_file(samples[0]["mid"])
+
+    #
+    # LYRIC PATCH TEST
+    #
+    # mid = bpmlib.patch_lyric(samples[0]["mid"])
+    # bpmlib.analysis_midi(mid)
+    # mid.save("test2.mid", unicode_encode=True)
 
     #
     # CONVERT MIDI FORMAT 1 TO 0
     #
-    # bpmlib.analysis_midi(
+    # bpmlib.analysis_midi_file(
     #     "sample/underestimated_bpm/ba_05206_+0_a_s14_f_03.mid",
     #     blind_note_lyrics=False,
     #     convert_1_to_0=True,
     # )
-    # bpmlib.analysis_midi(samples[2]["mid"], blind_note_lyrics=True, convert_1_to_0=True)
-    # bpmlib.analysis_midi(
+    # bpmlib.analysis_midi_file(samples[2]["mid"], blind_note_lyrics=True, convert_1_to_0=True)
+    # bpmlib.analysis_midi_file(
     #     samples[2]["mid"], blind_note_lyrics=False, convert_1_to_0=True
     # )
     # data_path = pathlib.Path("dataset/가창자_s02")
@@ -165,25 +311,31 @@ if __name__ == "__main__":
     # CREATE SAMPLE MIDI AND ANALYSIS IT
     #
     # test_create_sample_midi1("test_sample1.mid")
-    # bpmlib.analysis_midi("test_sample1.mid")
+    # bpmlib.analysis_midi_file("test_sample1.mid")
     # bpmlib.midi2wav("test_sample1.mid", "test_sample1.wav", 60)
     # print("-" * 70)
     # test_create_sample_midi2("test_sample2.mid")
-    # bpmlib.analysis_midi("test_sample2.mid")
+    # bpmlib.analysis_midi_file("test_sample2.mid")
     # bpmlib.midi2wav("test_sample2.mid", "test_sample2.wav", 60)
     # print("-" * 70)
     # test_create_sample_midi3("test_sample3.mid")
-    # bpmlib.analysis_midi("test_sample3.mid")
+    # bpmlib.analysis_midi_file("test_sample3.mid")
     # bpmlib.midi2wav("test_sample3.mid", "test_sample3.wav", 60)
     # print("-" * 70)
     # test_create_sample_midi4("test_sample4.mid")
-    # bpmlib.analysis_midi("test_sample4.mid")
+    # bpmlib.analysis_midi_file("test_sample4.mid")
     # bpmlib.midi2wav("test_sample4.mid", "test_sample4.wav", 60)
+    # test_create_sample_midi5("test_sample5.mid")
+    # bpmlib.analysis_midi_file("test_sample5.mid")
+    # bpmlib.midi2wav("test_sample5.mid", "test_sample5.wav", 60)
+    # test_create_sample_midi6("test_sample6.mid")
+    # bpmlib.analysis_midi_file("test_sample6.mid")
+    # bpmlib.midi2wav("test_sample6.mid", "test_sample6.wav", 60)
 
     #
     # GET STATISTICS of ESTIMATED CORRECTED BPM ERROR
     #
-    # sample_num = 10
+    # sample_num = 1
     # data_path = pathlib.Path("dataset/SINGER_16")
     # bpmlib.statistics_estimated_bpm_error(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path, sample_num=sample_num)
