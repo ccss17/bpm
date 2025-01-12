@@ -127,7 +127,7 @@ def print_track(
             total_time += time
             if not blind_note_lyrics:
                 print(
-                    f"{i:4} ┌note on ┐ {pretty_midi.note_number_to_name(msg.note)} {time:.2f}/{total_time:.2f} ({msg})",
+                    f"{i:4} ┌note on ┐ {pretty_midi.note_number_to_name(msg.note):3} {time:4.2f}/{total_time:6.2f} time={msg.time:<3} (note={msg.note})",
                 )
         elif msg.type == "note_off":
             lyric_note_num += 1
@@ -137,7 +137,7 @@ def print_track(
             total_time += time
             if not blind_note_lyrics:
                 print(
-                    f"{i:4} └note off┘ {pretty_midi.note_number_to_name(msg.note)} {time:.2f}/{total_time:.2f} ({msg})",
+                    f"{i:4} └note off┘ {pretty_midi.note_number_to_name(msg.note):3} {time:4.2f}/{total_time:6.2f} time={msg.time:<3} (note={msg.note})",
                 )
         elif msg.type == "lyrics":
             lyric_note_num += 1
@@ -148,12 +148,12 @@ def print_track(
             if not blind_note_lyrics:
                 try:
                     print(
-                        f"{i:4} │ lyrics │ {msg.bin()[3:].decode(lyric_encode)} {time:.2f}/{total_time:.2f} (time={msg.time})",
+                        f"{i:4} │ lyrics │ {msg.bin()[3:].decode(lyric_encode):2} {time:4.2f}/{total_time:6.2f} time={msg.time:<3}",
                     )
                 except UnicodeDecodeError:
                     lyric_encode = "euc-kr"
                     print(
-                        f"{i:4} │ lyrics │ {msg.bin()[3:].decode(lyric_encode)} {time:.2f}/{total_time:.2f} (time={msg.time})",
+                        f"{i:4} │ lyrics │ {msg.bin()[3:].decode(lyric_encode):2} {time:4.2f}/{total_time:6.2f} time={msg.time:<3}",
                     )
         elif msg.type == "set_tempo":
             if not first_tempo:
@@ -173,7 +173,7 @@ def print_track(
         elif msg.type == "channel_prefix":
             print(f"{i:4} [Channel Prefix] channel={msg.channel} (time={msg.time})")
         elif msg.type == "track_name":
-            print(f"{i:4} [Track name] {msg} {msg.bin()[3:].decode(lyric_encode)}")
+            print(f"{i:4} [Track name] {msg.bin()[3:].decode(lyric_encode)}")
         elif msg.type == "instrument_name":
             print(f"{i:4} [Instrument Name] {msg.name} (time={msg.time})")
         elif msg.type == "smpte_offset":

@@ -136,6 +136,39 @@ def test_create_sample_midi6(midi_path):
     mid.tracks.append(track)
 
     track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(mido.Message("note_on", note=61, velocity=64, time=1))
+    track.append(mido.Message("note_off", note=61, velocity=127, time=1))
+
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="a", time=0))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="b", time=0))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="c", time=0))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="d", time=0))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="e", time=0))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+    track.append(mido.Message("note_on", note=62, velocity=66, time=0))
+    track.append(mido.MetaMessage("lyrics", text="f", time=0))
+    track.append(mido.Message("note_off", note=62, velocity=127, time=1))
+
+    mid.save(midi_path)
+
+
+def test_create_sample_midi7(midi_path):
+    """test_sample_midi"""
+    mid = mido.MidiFile()
+    mid.ticks_per_beat = 1
+    track = mido.MidiTrack()
+    mid.tracks.append(track)
+
+    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
     track.append(mido.Message("note_on", note=61, velocity=64, time=0))
     track.append(mido.Message("note_off", note=61, velocity=127, time=1))
 
@@ -281,6 +314,7 @@ if __name__ == "__main__":
     # bpmlib.analysis_midi_file(samples[3]["mid"], print_bound_per_track=20)
     # bpmlib.analysis_midi_file(samples[0]["mid"])
     # bpmlib.analysis_midi_file(samples[1]["mid"])
+    # bpmlib.analysis_midi_file(samples[2]["mid"])
     # mid = bpmlib.analysis_midi_file(samples[0]["mid"])
 
     #
