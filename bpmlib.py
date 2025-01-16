@@ -85,18 +85,28 @@ def get_bpm_from_midi(midi_path):
 
 def patch_lyric(
     midi_path,
+    out_path,
+    src_encode="cp949",
+    tgt_encode="utf-8",
 ):
-    """F"""
+    """Function to patch lyric encoding"""
     mid = mido.MidiFile(midi_path)
     for track in mid.tracks:
         for msg in track:
             if msg.type == "lyrics":
-                # msg.text = "a"
-                msg.time = 0
-                msg.text = msg.bin()[3:].decode("utf-8").encode("utf-8").decode("utf-8")
-                # msg.text = '가'
-
-    return mid
+                # try:
+                msg.text = (
+                    msg.bin()[3:]
+                    .decode(src_encode)
+                    .encode(tgt_encode)
+                    .decode(tgt_encode)
+                )
+                # except UnicodeDecodeError:
+                # return
+    mid.save(
+        out_path,
+        unicode_encode=True,
+    )
 
 
 def print_track(
@@ -151,7 +161,7 @@ def print_track(
                         f"{i:4} │ lyrics │ {msg.bin()[3:].decode(lyric_encode):2} {time:4.2f}/{total_time:6.2f} time={msg.time:<3}",
                     )
                 except UnicodeDecodeError:
-                    lyric_encode = "euc-kr"
+                    lyric_encode = "cp949"
                     print(
                         f"{i:4} │ lyrics │ {msg.bin()[3:].decode(lyric_encode):2} {time:4.2f}/{total_time:6.2f} time={msg.time:<3}",
                     )

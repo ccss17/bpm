@@ -6,6 +6,9 @@ import bpmlib
 
 import mido
 
+# from rich import print
+# from rich.columns import Columns
+
 
 def test_bpm_estimator_librosa(audio_path):
     """Test bpm_estimator_librosa"""
@@ -308,9 +311,10 @@ if __name__ == "__main__":
     #
     # LYRIC PATCH TEST
     #
-    # mid = bpmlib.patch_lyric(samples[0]["mid"])
-    # bpmlib.analysis_midi(mid)
-    # mid.save("test2.mid", unicode_encode=True)
+    midi_path = samples[3]["mid"]
+    idx = midi_path.find(".")
+    out_path = midi_path[:idx] + "(utf-8)" + midi_path[idx:]
+    bpmlib.patch_lyric(midi_path, out_path, src_encode="cp949", tgt_encode="utf-8")
 
     #
     # CONVERT MIDI FORMAT 1 TO 0
