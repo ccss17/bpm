@@ -14,17 +14,8 @@ from mido import MidiFile
 from pydub import AudioSegment
 from pydub.generators import Sine
 
-from rich import inspect
 from rich import print
-from rich.columns import Columns
-from rich import pretty
-from rich.panel import Panel
-from rich.color import Color
 from rich.console import Console
-from rich.console import Group
-from rich.style import Style
-from rich.text import Text
-from rich.padding import Padding
 
 DEFAULT_BPM = 120
 DEFAULT_TEMPO = 500000
@@ -160,7 +151,11 @@ def print_track(
     ):
         lyric = msg.bin()[3:].decode(lyric_encode).strip()
         border = f"[{border_color}]│[/{border_color}]"
-        lyric_info = f"{lyric:^5}" if lyric in string.ascii_letters else f"{lyric:^4}"
+        lyric_info = (
+            f"{lyric:^5}"
+            if lyric in string.ascii_letters + string.digits
+            else f"{lyric:^4}"
+        )
         printing(
             idx_info,
             border + f"[{lyric_style}]" + lyric_info + f"[/{lyric_style}]" + border,
@@ -168,7 +163,7 @@ def print_track(
         )
 
     def note_info(note):
-        return f"{pretty_midi.note_number_to_name(msg.note):^5}"
+        return f"{pretty_midi.note_number_to_name(note):^5}"
 
     def note_on_info(note, color="white"):
         return f"[{color}]┌{note_info(note)}┐[/{color}]"
@@ -233,24 +228,26 @@ def print_track(
             lyric_note_num += 1
             if not blind_note_lyrics:
                 try:
-                    print_lyric(
-                        idx_info,
-                        msg,
-                        lyric_encode,
-                        time,
-                        total_time,
-                        border_color=f"color({color_list[note_address]})",
-                    )
+                    msg.bin()[3:].decode(lyric_encode)
                 except UnicodeDecodeError:
                     lyric_encode = "cp949"
-                    print_lyric(
-                        idx_info,
-                        msg,
-                        lyric_encode,
-                        time,
-                        total_time,
-                        border_color=f"color({color_list[note_address]})",
-                    )
+                if not note_queue and (
+                    track[i + 1].type != "note_on" or track[i + 1].time != 0
+                ):  # error case
+                    lyric_style = "white on red"
+                    border_color = "white on red"
+                else:
+                    lyric_style = "bold #98ff29"
+                    border_color = f"color({color_list[note_address]})"
+                print_lyric(
+                    idx_info,
+                    msg,
+                    lyric_encode,
+                    time,
+                    total_time,
+                    lyric_style=lyric_style,
+                    border_color=border_color,
+                )
         elif msg.type == "set_tempo":
             if not first_tempo and convert_1_to_0:
                 print_lyric_note_num(lyric_note_num, bpm)
@@ -260,7 +257,7 @@ def print_track(
             bpm = round(mido.tempo2bpm(msg.tempo, time_signature=time_signature))
             printing(
                 idx_info,
-                msg_type_info(f"[Tempo]"),
+                msg_type_info("[Tempo]"),
                 f"[white]BPM=[/white][color(190)]{bpm}[/color(190)]",
                 time_info(msg.time, time, total_time),
                 f"[color(240)]Tempo={msg.tempo}[/color(240)]",
@@ -269,53 +266,52 @@ def print_track(
         elif msg.type == "end_of_track":
             if convert_1_to_0:
                 print_lyric_note_num(lyric_note_num, bpm)
-            # print(f"[End of Track] (time={msg.time})")
             printing(
                 idx_info,
                 msg_type_info(
-                    f"[End of Track]",
+                    "[End of Track]",
                 ),
                 time_info(msg.time, time, total_time),
             )
         elif msg.type == "channel_prefix":
             printing(
                 idx_info,
-                msg_type_info(f"[Channel Prefix]"),
+                msg_type_info("[Channel Prefix]"),
                 f"[color(240)]channel={msg.channel}[/color(240)]",
                 time_info(msg.time, time, total_time),
             )
         elif msg.type == "track_name":
             printing(
                 idx_info,
-                msg_type_info(f"[Track name]"),
+                msg_type_info("[Track name]"),
                 f"{msg.bin()[3:].decode(lyric_encode)}",
                 time_info(msg.time, time, total_time),
             )
         elif msg.type == "instrument_name":
             printing(
                 idx_info,
-                msg_type_info(f"[Instrument Name]"),
+                msg_type_info("[Instrument Name]"),
                 f"[color(240)]{msg.name}[/color(240)]",
                 time_info(msg.time, time, total_time),
             )
         elif msg.type == "smpte_offset":
             printing(
                 idx_info,
-                msg_type_info(f"[SMPTE]"),
+                msg_type_info("[SMPTE]"),
                 f"[color(240)]{msg}[/color(240)]",
                 time_info(msg.time, time, total_time),
             )
         elif msg.type == "key_signature":
             printing(
                 idx_info,
-                msg_type_info(f"[Key Signature]"),
+                msg_type_info("[Key Signature]"),
                 f"{msg.key}",
                 time_info(msg.time, time, total_time),
             )
         elif msg.type == "time_signature":
             printing(
                 idx_info,
-                msg_type_info(f"[Time Signature]"),
+                msg_type_info("[Time Signature]"),
                 f"{msg.numerator}/{msg.denominator}",
                 time_info(msg.time, time, total_time),
                 f"[color(240)](clocks_per_click={msg.clocks_per_click},",
