@@ -135,8 +135,8 @@ def print_track(
             return f"[color(240)]{time:4.2f}/{total_time:6.2f} time={ticks:<3}[/color(240)]"
         else:
             return (
-                f"[red]{time:4.2f}[/red]/[white]{total_time:6.2f}[/white] "
-                + f"[white]time=[/white][red]{ticks:<3}[/red]"
+                f"[#ffffff]{time:4.2f}[/#ffffff][white]/{total_time:6.2f}[/white] "
+                + f"[white]time=[/white][#ffffff]{ticks:<3}[/#ffffff]"
             )
 
     def msg_type_info(msg_type):
@@ -144,7 +144,7 @@ def print_track(
 
     def print_lyric_note_num(lyric_note_num, bpm=120):
         color = "color(240)" if lyric_note_num == 0 else "color(47)"
-        Console(width=50).rule(
+        Console(width=55).rule(
             f"[bold {color}]Total item num of BPM({bpm}): {lyric_note_num}",
             style=f"{color}",
         )
@@ -155,7 +155,7 @@ def print_track(
         lyric_encode,
         time,
         total_time,
-        lyric_style="bold color(47)",
+        lyric_style="bold #98ff29",
         border_color="white",
     ):
         lyric = msg.bin()[3:].decode(lyric_encode).strip()
@@ -176,6 +176,20 @@ def print_track(
     def note_off_info(note, color="white"):
         return f"[{color}]└{note_info(note)}┘[/{color}]"
 
+    def note_queue_empty_address(note_queue):
+        address = 0
+        while True:
+            try:
+                note_queue[address]
+                address += 1
+            except KeyError:
+                return address
+
+    def note_queue_value_address(note_queue, value):
+        for k, v in note_queue.items():
+            if v == value:
+                return k
+
     # default setting
     time_signature = DEFAULT_TIME_SIGNATURE
     bpm = DEFAULT_BPM
@@ -185,9 +199,10 @@ def print_track(
     total_time = 0
     lyric_note_num = 0
     first_tempo = True
+    color_list = [15, 165, 47, 9, 87, 121, 27, 190]
+    note_queue = {}
     for i, msg in enumerate(track):
-        # print(f"[white]{i:4}[/white]", end=" ")
-        idx_info = f"[white]{i:4}[/white]"
+        idx_info = f"[color(244)]{i:4}[/color(244)]"
         if i > print_bound_per_track:
             break
         time = mido.tick2second(msg.time, ticks_per_beat=ticks_per_beat, tempo=tempo)
@@ -195,29 +210,47 @@ def print_track(
         if msg.type == "note_on":
             lyric_note_num += 1
             if not blind_note_lyrics:
+                note_address = note_queue_empty_address(note_queue)
+                note_queue[note_address] = msg.note
                 printing(
                     idx_info,
-                    f"{note_on_info(msg.note)}",
+                    f"{note_on_info(msg.note, color=f'color({color_list[note_address]})')}",
                     time_info(msg.time, time, total_time),
                     f"[color(240)](note={msg.note})[/color(240)]",
                 )
         elif msg.type == "note_off":
             lyric_note_num += 1
             if not blind_note_lyrics:
+                note_idx = note_queue_value_address(note_queue, msg.note)
                 printing(
                     idx_info,
-                    f"{note_off_info(msg.note)}",
+                    f"{note_off_info(msg.note, color=f'color({color_list[note_idx]})')}",
                     time_info(msg.time, time, total_time),
                     f"[color(240)](note={msg.note})[/color(240)]",
                 )
+                del note_queue[note_idx]
         elif msg.type == "lyrics":
             lyric_note_num += 1
             if not blind_note_lyrics:
                 try:
-                    print_lyric(idx_info, msg, lyric_encode, time, total_time)
+                    print_lyric(
+                        idx_info,
+                        msg,
+                        lyric_encode,
+                        time,
+                        total_time,
+                        border_color=f"color({color_list[note_address]})",
+                    )
                 except UnicodeDecodeError:
                     lyric_encode = "cp949"
-                    print_lyric(idx_info, msg, lyric_encode, time, total_time)
+                    print_lyric(
+                        idx_info,
+                        msg,
+                        lyric_encode,
+                        time,
+                        total_time,
+                        border_color=f"color({color_list[note_address]})",
+                    )
         elif msg.type == "set_tempo":
             if not first_tempo and convert_1_to_0:
                 print_lyric_note_num(lyric_note_num, bpm)
@@ -248,7 +281,7 @@ def print_track(
             printing(
                 idx_info,
                 msg_type_info(f"[Channel Prefix]"),
-                "channel={msg.channel}",
+                f"[color(240)]channel={msg.channel}[/color(240)]",
                 time_info(msg.time, time, total_time),
             )
         elif msg.type == "track_name":
@@ -262,14 +295,14 @@ def print_track(
             printing(
                 idx_info,
                 msg_type_info(f"[Instrument Name]"),
-                f"{msg.name}",
+                f"[color(240)]{msg.name}[/color(240)]",
                 time_info(msg.time, time, total_time),
             )
         elif msg.type == "smpte_offset":
             printing(
                 idx_info,
                 msg_type_info(f"[SMPTE]"),
-                f"{msg}",
+                f"[color(240)]{msg}[/color(240)]",
                 time_info(msg.time, time, total_time),
             )
         elif msg.type == "key_signature":
@@ -284,9 +317,9 @@ def print_track(
                 idx_info,
                 msg_type_info(f"[Time Signature]"),
                 f"{msg.numerator}/{msg.denominator}",
+                time_info(msg.time, time, total_time),
                 f"[color(240)](clocks_per_click={msg.clocks_per_click},",
                 f"notated_32nd_notes_per_beat={msg.notated_32nd_notes_per_beat},[/color(240)]",
-                time_info(msg.time, time, total_time),
             )
             time_signature = (msg.numerator, msg.denominator)
         else:

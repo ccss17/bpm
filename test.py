@@ -262,6 +262,33 @@ def test_create_sample_midi7(midi_path):
     mid.save(midi_path)
 
 
+def test_create_sample_midi8(midi_path):
+    """test_sample_midi"""
+    mid = mido.MidiFile()
+    mid.ticks_per_beat = 2
+    track = mido.MidiTrack()
+    mid.tracks.append(track)
+
+    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(mido.Message("note_on", note=64, velocity=64, time=2))
+    track.append(mido.MetaMessage("lyrics", text="a", time=12))
+    track.append(mido.Message("note_on", note=74, velocity=64, time=2))
+    track.append(mido.MetaMessage("lyrics", text="a", time=12))
+    track.append(mido.Message("note_on", note=65, velocity=64, time=2))
+    track.append(mido.MetaMessage("lyrics", text="a", time=12))
+    track.append(mido.Message("note_on", note=66, velocity=64, time=2))
+    track.append(mido.MetaMessage("lyrics", text="a", time=12))
+    track.append(mido.Message("note_off", note=64, velocity=127, time=8))
+    track.append(mido.MetaMessage("lyrics", text="a", time=10))
+    track.append(mido.Message("note_off", note=74, velocity=127, time=8))
+    track.append(mido.MetaMessage("lyrics", text="a", time=10))
+    track.append(mido.Message("note_off", note=66, velocity=127, time=8))
+    track.append(mido.MetaMessage("lyrics", text="a", time=10))
+    track.append(mido.Message("note_off", note=65, velocity=127, time=8))
+
+    mid.save(midi_path)
+
+
 def test_rich():
     from rich import inspect
     from rich import print
@@ -354,7 +381,7 @@ def test_rich():
 
     # console.print("Hello", style="color(5)")
 
-    color_list = [15, 27, 47, 87, 165, 9, 121, 190]
+    color_list = [15, 165, 47, 9, 87, 121, 27, 190]
     for color in color_list:
         text = Text("Hello", style=f"color({color})")
         # console.print("Hello", style=f"color({color})")
@@ -400,14 +427,17 @@ if __name__ == "__main__":
     # bpmlib.analysis_midi_file(samples[0]["mid"], print_bound_per_track=55)
     # bpmlib.analysis_midi_file(samples[2]["mid"], print_bound_per_track=40)
     # bpmlib.analysis_midi_file(samples[3]["mid"], print_bound_per_track=20)
-    # bpmlib.analysis_midi_file(samples[0]["mid"])
+    bpmlib.analysis_midi_file(samples[0]["mid"])
     # bpmlib.analysis_midi_file(samples[1]["mid"])
+    # bpmlib.analysis_midi_file(samples[2]["mid"])
+    # bpmlib.analysis_midi_file(samples[3]["mid"])
+    # bpmlib.analysis_midi_file(samples[3]["mid"], convert_1_to_0=True)
     # bpmlib.analysis_midi_file(samples[2]["mid"], print_bound_per_track=15)
     # bpmlib.analysis_midi_file(samples[2]["mid"], convert_1_to_0=True)
     # bpmlib.analysis_midi_file(
     #     samples[2]["mid"], convert_1_to_0=True, blind_note_lyrics=True
     # )
-    bpmlib.analysis_midi_file(samples[2]["mid"])
+    # bpmlib.analysis_midi_file(samples[2]["mid"])
     # mid = bpmlib.analysis_midi_file(samples[0]["mid"])
 
     #
@@ -467,6 +497,9 @@ if __name__ == "__main__":
     # test_create_sample_midi7("test_sample7.mid")
     # bpmlib.analysis_midi_file("test_sample7.mid")
     # bpmlib.midi2wav("test_sample7.mid", "test_sample7.wav", 60)
+    # test_create_sample_midi8("test_sample8.mid")
+    # bpmlib.analysis_midi_file("test_sample8.mid")
+    # bpmlib.midi2wav("test_sample8.mid", "test_sample8.wav", 60)
 
     #
     # GET STATISTICS of ESTIMATED CORRECTED BPM ERROR
