@@ -6,9 +6,6 @@ import bpmlib
 
 import mido
 
-# from rich import print
-# from rich.columns import Columns
-
 
 def test_bpm_estimator_librosa(audio_path):
     """Test bpm_estimator_librosa"""
@@ -265,6 +262,106 @@ def test_create_sample_midi7(midi_path):
     mid.save(midi_path)
 
 
+def test_rich():
+    from rich import inspect
+    from rich import print
+    from rich.columns import Columns
+    from rich import pretty
+    from rich.panel import Panel
+    from rich.color import Color
+    from rich.console import Console
+    from rich.console import Group
+    from rich.style import Style
+    from rich.text import Text
+    from rich.padding import Padding
+
+    print("[italic red]Hello[/italic red] World!")
+    pretty.install()
+    print(Panel.fit("[bold yellow]Hi, I'm a Panel", border_style="red"))
+    # color = Color.parse("red")
+    # print(color)
+    # print(inspect(color, methods=True))
+
+    console = Console()
+    console.print([1, 2, 3])
+    console.print("[blue underline]Looks like a link")
+    # console.print(locals())
+    console.print("FOO", style="white on blue")
+    # print("FOO", style="white on blue")
+    console.rule("[bold red]Chapter 2")
+
+    console = Console(width=20)
+    style = "bold white on blue"
+    console.print("Rich", style=style)
+    console.print("Rich", style=style, justify="left")
+    console.print("Rich", style=style, justify="center")
+    console.print("Rich", style=style, justify="right")
+    console.rule("[bold red]Chapter 2")
+
+    console = Console()
+    # console.input("What is [i]your[/i] [bold red]name[/]? :smiley: ")
+    console.print("What is [i]your[/i] [bold red]name[/]? :smiley: ")
+    console.print("Hello", style="magenta")
+    console.print("Hello", style="color(5)")
+    console.print("Hello", style="#af00ff")
+    console.print("Hello", style="rgb(175,0,255)")
+    console.print("DANGER!", style="red on white")
+    console.print("Danger, Will Robinson!", style="blink bold red underline on white")
+    console.print("foo [not bold]bar[/not bold] baz", style="bold")
+    console.print("Google", style="link https://google.com")
+
+    danger_style = Style(color="red", blink=True, bold=True)
+    console.print("Danger, Will Robinson!", style=danger_style)
+
+    console = Console()
+    base_style = Style.parse("cyan")
+    console.print("Hello, World", style=base_style + Style(underline=True))
+
+    style = Style(color="magenta", bgcolor="yellow", italic=True)
+    style = Style.parse("italic magenta on yellow")
+
+    print("[bold red]alert![/bold red] Something happened")
+    print("[bold italic yellow on red blink]This text is impossible to read")
+    print("[bold red]Bold and red[/] not bold or red")
+    print("[bold]Bold[italic] bold and italic [/bold]italic[/italic]")
+
+    # console = Console()
+    # text = Text("Hello, World!")
+    # text.stylize("bold magenta", 0, 6)
+    # console.print(text)
+
+    # text = Text.from_ansi("\033[1mHello, World!\033[0m")
+    # console.print(text.spans)
+
+    # panel = Panel(Text("Hello", justify="right"))
+    # print(panel)
+
+    # columns = Columns("sample", equal=True, expand=True)
+    # print(columns)
+
+    # panel_group = Group(
+    #     Panel("Hello", style="on blue"),
+    #     Panel("World", style="on red"),
+    # )
+    # print(Panel(panel_group))
+
+    # test = Padding("Hello", 1)
+    # print(test)
+
+    print(Panel("Hello, [red]World!"))
+    print(Panel.fit("Hello, [red]World!"))
+    print(Panel("Hello, [red]World!", title="Welcome", subtitle="Thank you"))
+
+    # console.print("Hello", style="color(5)")
+
+    color_list = [15, 27, 47, 87, 165, 9, 121, 190]
+    for color in color_list:
+        text = Text("Hello", style=f"color({color})")
+        # console.print("Hello", style=f"color({color})")
+        console.print(text, end=" ")
+        # print(text)
+
+
 if __name__ == "__main__":
     samples = [
         {
@@ -305,16 +402,26 @@ if __name__ == "__main__":
     # bpmlib.analysis_midi_file(samples[3]["mid"], print_bound_per_track=20)
     # bpmlib.analysis_midi_file(samples[0]["mid"])
     # bpmlib.analysis_midi_file(samples[1]["mid"])
-    # bpmlib.analysis_midi_file(samples[2]["mid"])
+    # bpmlib.analysis_midi_file(samples[2]["mid"], print_bound_per_track=15)
+    # bpmlib.analysis_midi_file(samples[2]["mid"], convert_1_to_0=True)
+    # bpmlib.analysis_midi_file(
+    #     samples[2]["mid"], convert_1_to_0=True, blind_note_lyrics=True
+    # )
+    bpmlib.analysis_midi_file(samples[2]["mid"])
     # mid = bpmlib.analysis_midi_file(samples[0]["mid"])
 
     #
     # LYRIC PATCH TEST
     #
-    midi_path = samples[3]["mid"]
-    idx = midi_path.find(".")
-    out_path = midi_path[:idx] + "(utf-8)" + midi_path[idx:]
-    bpmlib.patch_lyric(midi_path, out_path, src_encode="cp949", tgt_encode="utf-8")
+    # midi_path = samples[3]["mid"]
+    # idx = midi_path.find(".")
+    # out_path = midi_path[:idx] + "(utf-8)" + midi_path[idx:]
+    # bpmlib.patch_lyric(midi_path, out_path, src_encode="cp949", tgt_encode="utf-8")
+
+    #
+    # TEST RICH
+    #
+    # test_rich()
 
     #
     # CONVERT MIDI FORMAT 1 TO 0
