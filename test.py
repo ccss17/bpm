@@ -22,18 +22,6 @@ def test_get_bpm_from_midi(midi_path):
     print(round(bpmlib.get_bpm_from_midi(midi_path)))
 
 
-def test_convert_midi_format_1_to_0(midi_path, blind_note_lyrics=True):
-    """test
-    ref: https://stackoverflow.com/questions/55431137/
-    how-to-convert-midi-type-1-files-to-midi-type-0-in-python-or-command-line"""
-    mid = mido.MidiFile(midi_path)
-    merged_track = mido.merge_tracks(mid.tracks)
-    print(f"\nTrack 0: {merged_track.name}\n")
-    bpmlib.print_track(
-        merged_track, mid.ticks_per_beat, blind_note_lyrics=blind_note_lyrics
-    )
-
-
 def test_create_sample_midi1(midi_path):
     """test_sample_midi"""
     mid = mido.MidiFile()
@@ -425,21 +413,19 @@ if __name__ == "__main__":
     #
     # ANALYSIS MIDI FILE
     #
-    # bpmlib.analysis_midi_file(samples[0]["mid"], print_bound_per_track=55)
-    # bpmlib.analysis_midi_file(samples[2]["mid"], print_bound_per_track=40)
-    # bpmlib.analysis_midi_file(samples[3]["mid"], print_bound_per_track=20)
-    # bpmlib.analysis_midi_file(samples[0]["mid"])
-    # bpmlib.analysis_midi_file(samples[1]["mid"])
-    # bpmlib.analysis_midi_file(samples[2]["mid"])
-    # bpmlib.analysis_midi_file(samples[3]["mid"])
-    # bpmlib.analysis_midi_file(samples[3]["mid"], convert_1_to_0=True)
-    # bpmlib.analysis_midi_file(samples[2]["mid"], print_bound_per_track=15)
-    # bpmlib.analysis_midi_file(samples[2]["mid"], convert_1_to_0=True)
-    # bpmlib.analysis_midi_file(
-    #     samples[2]["mid"], convert_1_to_0=True, blind_note_lyrics=True
+    # bpmlib.MidiAnalyser(samples[0]["mid"]).analysis(print_bound_per_track=55)
+    # bpmlib.MidiAnalyser(samples[2]["mid"]).analysis(print_bound_per_track=40)
+    # bpmlib.MidiAnalyser(samples[3]["mid"]).analysis(print_bound_per_track=20)
+    # bpmlib.MidiAnalyser(samples[0]["mid"])
+    # bpmlib.MidiAnalyser(samples[1]["mid"])
+    # bpmlib.MidiAnalyser(samples[2]["mid"])
+    # bpmlib.MidiAnalyser(samples[2]["mid"]).analysis(convert_1_to_0=True)
+    # bpmlib.MidiAnalyser(samples[3]["mid"])
+    # bpmlib.MidiAnalyser(samples[3]["mid"]).analysis(convert_1_to_0=True)
+    # bpmlib.MidiAnalyser(samples[2]["mid"]).analysis(print_bound_per_track=15)
+    # bpmlib.MidiAnalyser(samples[2]["mid"]).analysis(
+    #     convert_1_to_0=True, blind_note_lyrics=True
     # )
-    # bpmlib.analysis_midi_file(samples[2]["mid"])
-    # mid = bpmlib.analysis_midi_file(samples[0]["mid"])
 
     # 에러 사항 출력:
     # 가사의 time=0 이 아닌 것들 출력
@@ -461,52 +447,31 @@ if __name__ == "__main__":
     # test_rich()
 
     #
-    # CONVERT MIDI FORMAT 1 TO 0
-    #
-    # bpmlib.analysis_midi_file(
-    #     "sample/underestimated_bpm/ba_05206_+0_a_s14_f_03.mid",
-    #     blind_note_lyrics=False,
-    #     convert_1_to_0=True,
-    # )
-    # bpmlib.analysis_midi_file(samples[2]["mid"], blind_note_lyrics=True, convert_1_to_0=True)
-    # bpmlib.analysis_midi_file(
-    #     samples[2]["mid"], blind_note_lyrics=False, convert_1_to_0=True
-    # )
-    # data_path = pathlib.Path("dataset/가창자_s02")
-    # for i, mid_path in enumerate(data_path.rglob("*.mid")):
-    #     if i == 4:
-    #         test_convert_midi_format_1_to_0(mid_path, blind_note_lyrics=True)
-
-    #
     # CREATE SAMPLE MIDI AND ANALYSIS IT
     #
     # test_create_sample_midi1("test_sample1.mid")
-    # bpmlib.analysis_midi_file("test_sample1.mid")
     # bpmlib.midi2wav("test_sample1.mid", "test_sample1.wav", 60)
-    # print("-" * 70)
     # test_create_sample_midi2("test_sample2.mid")
-    # bpmlib.analysis_midi_file("test_sample2.mid")
     # bpmlib.midi2wav("test_sample2.mid", "test_sample2.wav", 60)
-    # print("-" * 70)
     # test_create_sample_midi3("test_sample3.mid")
-    # bpmlib.analysis_midi_file("test_sample3.mid")
     # bpmlib.midi2wav("test_sample3.mid", "test_sample3.wav", 60)
-    # print("-" * 70)
     # test_create_sample_midi4("test_sample4.mid")
-    # bpmlib.analysis_midi_file("test_sample4.mid")
     # bpmlib.midi2wav("test_sample4.mid", "test_sample4.wav", 60)
-    # test_create_sample_midi5("test_sample5.mid")
-    # bpmlib.analysis_midi_file("test_sample5.mid")
-    # bpmlib.midi2wav("test_sample5.mid", "test_sample5.wav", 60)
     # test_create_sample_midi6("test_sample6.mid")
-    # bpmlib.analysis_midi_file("test_sample6.mid")
     # bpmlib.midi2wav("test_sample6.mid", "test_sample6.wav", 60)
     # test_create_sample_midi7("test_sample7.mid")
-    # bpmlib.analysis_midi_file("test_sample7.mid")
     # bpmlib.midi2wav("test_sample7.mid", "test_sample7.wav", 60)
     # test_create_sample_midi8("test_sample8.mid")
-    # bpmlib.analysis_midi_file("test_sample8.mid")
     # bpmlib.midi2wav("test_sample8.mid", "test_sample8.wav", 60)
+
+    # bpmlib.MidiAnalyser("test_sample1.mid").analysis()
+    # bpmlib.MidiAnalyser("test_sample2.mid").analysis()
+    # bpmlib.MidiAnalyser("test_sample3.mid").analysis()
+    # bpmlib.MidiAnalyser("test_sample4.mid").analysis()
+    # bpmlib.MidiAnalyser("test_sample5.mid").analysis()
+    # bpmlib.MidiAnalyser("test_sample6.mid").analysis()
+    # bpmlib.MidiAnalyser("test_sample7.mid").analysis()
+    # bpmlib.MidiAnalyser("test_sample8.mid").analysis()
 
     #
     # GET STATISTICS of ESTIMATED CORRECTED BPM ERROR
