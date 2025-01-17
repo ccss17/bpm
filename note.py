@@ -1,0 +1,73 @@
+NOTE = {
+    62: ("quadruple dotted quarter note", "네겹점8온음표", "𝆶⸬"),
+    60: ("triple dotted quarter note", "세겹점8온음표", "𝆶…"),
+    56: ("double dotted quarter note", "겹점8온음표", "𝆶‥"),
+    48: ("dotted quarter note", "점8온음표", "𝆶."),
+    32: ("quarter note", "8온음표", "𝆶"),
+
+    31: ("quadruple dotted quarter note", "네겹점4온음표", "𝅜𝅥⸬"),
+    30: ("triple dotted quarter note", "세겹점4온음표", "𝅜𝅥…"),
+    28: ("double dotted quarter note", "겹점4온음표", "𝅜𝅥‥"),
+    24: ("dotted quarter note", "점4온음표", "𝅜𝅥."),
+    16: ("quarter note", "4온음표", "𝅜"),
+
+    15.5: ("quadruple dotted double note", "네겹점겹온음표", "𝅜⸬"),
+    15: ("triple dotted double note", "세겹점겹온음표", "𝅜…"),
+    14: ("double dotted double note", "겹점겹온음표", "𝅜‥"),
+    12: ("dotted double note", "점겹온음표", "𝅜."),
+    8: ("double note", "겹온음표", "𝅜"),
+
+    7.75: ("quadruple dotted whole note", "네겹점온음표", "𝅝⸬"),
+    7.5: ("triple dotted whole note", "세겹점온음표", "𝅝…"),
+    7: ("double dotted whole note", "겹점온음표", "𝅝‥"),
+    6: ("dotted whole note", "점온음표", "𝅝."),
+    4: ("whole note", "온음표", "𝅝"),
+
+    3.875: ("quadruple dotted whole note", "네겹점2분음표", "♩⸬"),
+    3.75: ("triple dotted whole note", "세겹점2분음표", "♩…"),
+    3.5: ("double dotted whole note", "겹점2분음표", "♩‥"),
+    3: ("dotted whole note", "점2분음표", "♩."),
+    2: ("half note", "2분음표", "𝅗𝅥"),
+
+    1.9375: ("quadruple dotted quarter note", "네겹점4분음표", "♩⸬"),
+    1.875: ("triple dotted quarter note", "세겹점4분음표", "♩…"),
+    1.75: ("double dotted quarter note", "겹점4분음표", "♩‥"),
+    1.5: ("dotted quarter note", "점4분음표", "♩."),
+    1: ("quarter note", "4분음표", "♩"),
+
+    0.96875: ("quadruple dotted eighth note", "네겹점8분음표", "♪⸬"),
+    0.9375: ("triple dotted eighth note", "세겹점8분음표", "♪…"),
+    0.875: ("double dotted eighth note", "겹점8분음표", "♪‥"),
+    0.75: ("dotted eighth note", "점8분음표", "♪."),
+    0.5: ("eighth note", "8분음표", "♪"),
+
+    0.484375: ("quadruple dotted sixteenth note", "네겹점16분음표", "𝅘𝅥𝅯⸬"),
+    0.46875: ("triple dotted sixteenth note", "세겹점16분음표", "𝅘𝅥𝅯…"),
+    0.4375: ("double dotted sixteenth note", "겹점16분음표", "𝅘𝅥𝅯‥"),
+    0.375: ("dotted sixteenth note", "점16분음표", "𝅘𝅥𝅯."),
+    0.25: ("sixteenth note", "16분음표", "𝅘𝅥𝅯"),
+
+    0.2421875: ("quadruple dotted thirty-second note", "네겹점32분음표", "𝅘𝅥𝅰⸬"),
+    0.234375: ("triple dotted thirty-second note", "세겹점32분음표", "𝅘𝅥𝅰…"),
+    0.21875: ("double dotted thirty-second note", "겹점32분음표", "𝅘𝅥𝅰‥"),
+    0.1875: ("dotted thirty-second note", "점32분음표", "𝅘𝅥𝅰."),
+    0.125: ("thirty-second note", "32분음표", "𝅘𝅥𝅰"),
+
+    0.12109375: ("quadruple dotted sixty-fourth note", "네겹점64분음표", "𝅘𝅥𝅱⸬"),
+    0.1171875: ("triple dotted sixty-fourth note", "세겹점64분음표", "𝅘𝅥𝅱…"),
+    0.109375: ("double dotted sixty-fourth note", "겹점64분음표", "𝅘𝅥𝅱‥"),
+    0.09375: ("dotted sixty-fourth note", "점64분음표", "𝅘𝅥𝅱."),
+    0.0625: ("sixty-fourth note", "64분음표", "𝅘𝅥𝅱"),
+
+    0.060546875: ("triple dotted hundred twenty-eighth note", "세겹점128분음표", "𝅘𝅥𝅲…"),
+    0.05859375: ("triple dotted hundred twenty-eighth note", "세겹점128분음표", "𝅘𝅥𝅲…"),
+    0.0546875: ("double dotted hundred twenty-eighth note", "겹점128분음표", "𝅘𝅥𝅲‥"),
+    0.046875: ("dotted hundred twenty-eighth note", "점128분음표", "𝅘𝅥𝅲."),
+    0.03125: ("hundred twenty-eighth note", "128분음표", "𝅘𝅥𝅲"),
+
+    0.0302734375: ("quadruple dotted two hundred fifty-sixth note", "네겹점256분음표", "𝅘𝅥𝅲⸬"),
+    0.029296875: ("triple dotted two hundred fifty-sixth note", "세겹점256분음표", "𝅘𝅥𝅲…"),
+    0.02734375: ("double dotted two hundred fifty-sixth note", "겹점256분음표", "𝅘𝅥𝅲‥"),
+    0.0234375: ("dotted two hundred fifty-sixth note", "점256분음표", "𝅘𝅥𝅲."),
+    0.015625: ("two hundred fifty-sixth note", "256분음표", "𝅘𝅥𝅲"),
+}

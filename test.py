@@ -5,6 +5,7 @@ import pathlib
 import bpmlib
 
 import mido
+from rich import print
 
 
 def test_bpm_estimator_librosa(audio_path):
@@ -399,6 +400,11 @@ if __name__ == "__main__":
     ]
 
     #
+    # PRE-DEFINED NOTES
+    #
+    # bpmlib.show_notes()
+
+    #
     # BPM ESTIMATOR vs BPM FROM MIDI
     #
     # test_bpm_estimator_librosa(samples[0]["wav"])
@@ -413,19 +419,21 @@ if __name__ == "__main__":
     #
     # ANALYSIS MIDI FILE
     #
-    # bpmlib.MidiAnalyser(samples[0]["mid"]).analysis(print_bound_per_track=55)
-    # bpmlib.MidiAnalyser(samples[2]["mid"]).analysis(print_bound_per_track=40)
-    # bpmlib.MidiAnalyser(samples[3]["mid"]).analysis(print_bound_per_track=20)
-    # bpmlib.MidiAnalyser(samples[0]["mid"])
-    # bpmlib.MidiAnalyser(samples[1]["mid"])
-    # bpmlib.MidiAnalyser(samples[2]["mid"])
-    # bpmlib.MidiAnalyser(samples[2]["mid"]).analysis(convert_1_to_0=True)
-    # bpmlib.MidiAnalyser(samples[3]["mid"])
-    # bpmlib.MidiAnalyser(samples[3]["mid"]).analysis(convert_1_to_0=True)
-    # bpmlib.MidiAnalyser(samples[2]["mid"]).analysis(print_bound_per_track=15)
-    # bpmlib.MidiAnalyser(samples[2]["mid"]).analysis(
+    # bpmlib.MidiAnalyzer(samples[0]["mid"]).analysis(print_bound_per_track=55)
+    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=40)
+    # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(print_bound_per_track=20)
+    # bpmlib.MidiAnalyzer(samples[0]["mid"])
+    # bpmlib.MidiAnalyzer(samples[1]["mid"])
+    bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis()
+    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(convert_1_to_0=True, print_bound_per_track=40)
+    # bpmlib.MidiAnalyzer(samples[3]["mid"])
+    # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(convert_1_to_0=True)
+    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=15)
+    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(
     #     convert_1_to_0=True, blind_note_lyrics=True
     # )
+    # for k, v in bpmlib.NOTE.items():
+    #     print(f'{k} {v}')
 
     # 에러 사항 출력:
     # 가사의 time=0 이 아닌 것들 출력
@@ -464,14 +472,14 @@ if __name__ == "__main__":
     # test_create_sample_midi8("test_sample8.mid")
     # bpmlib.midi2wav("test_sample8.mid", "test_sample8.wav", 60)
 
-    # bpmlib.MidiAnalyser("test_sample1.mid").analysis()
-    # bpmlib.MidiAnalyser("test_sample2.mid").analysis()
-    # bpmlib.MidiAnalyser("test_sample3.mid").analysis()
-    # bpmlib.MidiAnalyser("test_sample4.mid").analysis()
-    # bpmlib.MidiAnalyser("test_sample5.mid").analysis()
-    # bpmlib.MidiAnalyser("test_sample6.mid").analysis()
-    # bpmlib.MidiAnalyser("test_sample7.mid").analysis()
-    # bpmlib.MidiAnalyser("test_sample8.mid").analysis()
+    # bpmlib.MidiAnalyzer("test_sample1.mid").analysis()
+    # bpmlib.MidiAnalyzer("test_sample2.mid").analysis()
+    # bpmlib.MidiAnalyzer("test_sample3.mid").analysis()
+    # bpmlib.MidiAnalyzer("test_sample4.mid").analysis()
+    # bpmlib.MidiAnalyzer("test_sample5.mid").analysis()
+    # bpmlib.MidiAnalyzer("test_sample6.mid").analysis()
+    # bpmlib.MidiAnalyzer("test_sample7.mid").analysis()
+    # bpmlib.MidiAnalyzer("test_sample8.mid").analysis()
 
     #
     # GET STATISTICS of ESTIMATED CORRECTED BPM ERROR
