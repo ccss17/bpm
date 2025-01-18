@@ -399,6 +399,20 @@ if __name__ == "__main__":
         },
     ]
 
+    real_samples = [
+        {
+            "mid": "sample/짠짜라-장윤정.mid",
+        },
+        {
+            "mid": "sample/남광진_편지.mid",
+        },
+        {
+            "mid": "sample/그리움만쌓이네.mid",
+        },
+        {
+            "mid": "sample/98_Necro (D#Min 142) Keys -12.mid",
+        },
+    ]
     #
     # PRE-DEFINED NOTES
     #
@@ -423,10 +437,10 @@ if __name__ == "__main__":
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=40)
     # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(print_bound_per_track=20)
     # bpmlib.MidiAnalyzer(samples[0]["mid"]).analysis()
-    # bpmlib.MidiAnalyzer(samples[1]["mid"])
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis()
+    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_note_lyrics=True)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_time=True)
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(convert_1_to_0=True, print_bound_per_track=40)
+    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(convert_1_to_0=True)
     # bpmlib.MidiAnalyzer(samples[3]["mid"])
     # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(convert_1_to_0=True)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=15)
@@ -436,11 +450,13 @@ if __name__ == "__main__":
     # for k, v in bpmlib.NOTE.items():
     #     print(f'{k} {v}')
 
-    # 에러 사항 출력:
-    # 가사의 time=0 이 아닌 것들 출력
-    # note 가 꼬여있는 것들 출력
+    # bpmlib.MidiAnalyzer(real_samples[3]["mid"]).analysis()
 
+    # 에러 사항 출력:
     # ticks per beat 기반으로 가사와 음표가 몇분음표인지 출력
+    # quantization 에러를 줄여야 함. --> 에러가 중첩되니까 --> 싱크를 맞춰야 함.
+    # --> 이전 quantization 에러를 고려해서 다음 노트의 에러를 계산해야 함. 에러가 - 면 밀렸다, + 면 땡겨졌다 이런 식으로 판단해서, 지금은 에러를 독립적으로 보기 때문에 에러가 계속 중첩 되는 상황
+    # --> 최종적으로는 quantization 된 mid 파일을 음원으로 재생하고, 노래를 같이 재생해보면서 싱크가 맞으면 제대로 했다 이런 결론을 내릴 수 있음.
 
     #
     # LYRIC PATCH TEST
