@@ -443,9 +443,9 @@ class MidiTrackAnalyzer:
         lyric = msg.bin()[3:].decode(self.lyric_encode).strip()
         border = f"[{border_color}]│[/{border_color}]"
         lyric_info = (
-            f"{lyric:^5}"
+            f"{lyric:^7}"
             if lyric in string.ascii_letters + string.digits
-            else f"{lyric:^4}"
+            else f"{lyric:^6}"
         )
         self.printing(
             self.idx_info,
@@ -456,7 +456,7 @@ class MidiTrackAnalyzer:
 
     def note_info(self, note):
         """note_info"""
-        return f"{pretty_midi.note_number_to_name(note):^5}"
+        return f"{pretty_midi.note_number_to_name(note):>3}({note})"
 
     def note_on_info(self, note, color="white"):
         """note_on_info"""
