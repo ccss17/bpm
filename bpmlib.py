@@ -29,9 +29,9 @@ def show_notes():
     for k, v in NOTE.items():
         k = float(k)
         if 4 / k <= 1:
-            rprint(f"{v[-1]:3} {k:<6.3} {1/(4/k):<6}온음표 {v[1]}")
+            rprint(f"{v[-1]:3} {k:<6.3} {1 / (4 / k):<6}온음표 {v[1]}")
         else:
-            rprint(f"{v[-1]:3} {k:<6.3} {4/k:<6.5}분음표 {v[1]}")
+            rprint(f"{v[-1]:3} {k:<6.3} {4 / k:<6.5}분음표 {v[1]}")
 
 
 def bpm_estimator_librosa(audio_path):
@@ -184,7 +184,176 @@ class MidiTrackAnalyzer:
         self.total_time = 0
         self.lyric_note_num = 0
         self.first_tempo = True
-        self.color_list = [15, 165, 47, 9, 87, 121, 27, 190]
+        self.color_list = [
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+            15,
+            165,
+            47,
+            9,
+            87,
+            121,
+            27,
+            190,
+        ]
         self.note_queue = {}
         self.idx_info = ""
         self.msg = None
@@ -241,6 +410,7 @@ class MidiTrackAnalyzer:
 
     def analysis(self):
         """analysis"""
+        note_address = 0
         for i, msg in enumerate(self.track):
             self.idx_info = f"[color(244)]{i:4}[/color(244)]"
             if i > self.mid_analyzer.print_bound_per_track:
@@ -259,7 +429,8 @@ class MidiTrackAnalyzer:
                     note_address = self.note_queue_empty_address()
                     self.note_queue[note_address] = msg.note
                     note_msg = self.note_on_info(
-                        msg.note, color=f"color({self.color_list[note_address]})"
+                        msg.note,
+                        color=f"color({self.color_list[note_address // len(self.color_list)]})",
                     )
                     self.printing(
                         self.idx_info,
@@ -275,7 +446,9 @@ class MidiTrackAnalyzer:
                 if not self.mid_analyzer.blind_note_lyrics:
                     note_idx = self.note_queue_value_address(msg.note)
                     note_msg = self.note_off_info(
-                        msg.note, color=f"color({self.color_list[note_idx]})"
+                        msg.note,
+                        color=f"color(255)",
+                        # color=f"color({self.color_list[note_idx // len(self.color_list)]})",
                     )
                     self.printing(
                         self.idx_info,
@@ -286,7 +459,7 @@ class MidiTrackAnalyzer:
                         # f"[color(240)](note={msg.note})[/color(240)]",
                         self.quantization_info(),
                     )
-                    del self.note_queue[note_idx]
+                    # del self.note_queue[note_idx]
             elif msg.type == "lyrics":
                 self.lyric_note_num += 1
                 if not self.mid_analyzer.blind_note_lyrics:
@@ -302,7 +475,7 @@ class MidiTrackAnalyzer:
                         border_color = "white on red"
                     else:
                         lyric_style = "bold #98ff29"
-                        border_color = f"color({self.color_list[note_address]})"
+                        border_color = f"color({self.color_list[note_address // len(self.color_list)]})"
                     self.print_lyric(
                         msg,
                         lyric_style=lyric_style,

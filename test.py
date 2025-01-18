@@ -268,6 +268,8 @@ def test_create_sample_midi8(midi_path):
     track.append(mido.Message("note_on", note=66, velocity=64, time=2))
     track.append(mido.MetaMessage("lyrics", text="a", time=12))
     track.append(mido.Message("note_off", note=64, velocity=127, time=8))
+    track.append(mido.Message("note_on", note=70, velocity=127, time=8))
+    track.append(mido.Message("note_off", note=70, velocity=127, time=8))
     track.append(mido.MetaMessage("lyrics", text="a", time=10))
     track.append(mido.Message("note_off", note=74, velocity=127, time=8))
     track.append(mido.MetaMessage("lyrics", text="a", time=10))
@@ -423,11 +425,11 @@ if __name__ == "__main__":
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=40)
     # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(print_bound_per_track=20)
     # bpmlib.MidiAnalyzer(samples[0]["mid"]).analysis()
-    # bpmlib.MidiAnalyzer(samples[1]["mid"])
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis()
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_time=True)
+    bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(convert_1_to_0=True)
+    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(
+    #     blind_time=True, convert_1_to_0=True
+    # )
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(convert_1_to_0=True, print_bound_per_track=40)
-    # bpmlib.MidiAnalyzer(samples[3]["mid"])
     # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(convert_1_to_0=True)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=15)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(
@@ -435,6 +437,13 @@ if __name__ == "__main__":
     # )
     # for k, v in bpmlib.NOTE.items():
     #     print(f'{k} {v}')
+
+    midi_path = "98_Necro (D#Min 142) Keys -12.mid"
+    midi_path = "CymaticsWavesMIDICollection-V1-y8u\\Cymatics - Waves MIDI Collection\\Cymatics - Waves MIDI 1 - C Min.mid"
+    midi_path = "남광진_편지.midi"
+    midi_path = "짠짜라-장윤정.mid"
+    midi_path = "그리움만쌓이네.mid"
+    # bpmlib.MidiAnalyzer(midi_path).analysis(convert_1_to_0=True)
 
     # 에러 사항 출력:
     # 가사의 time=0 이 아닌 것들 출력
