@@ -25,14 +25,24 @@ DEFAULT_TEMPO = 500000
 DEFAULT_TIME_SIGNATURE = (4, 4)
 
 
+def pretty_note_info(note_info):
+    """pretty_note_info(note_info)"""
+    beat = float(note_info[0])
+    if 4 / beat <= 1:
+        note_name = f"{1/(4/beat)}온음표"
+        # return f"{note_info[-1]:3} {beat:<6.3} {1/(4/beat):<6}온음표 {note_info[2]}"
+        # return note_info[-1], f"{beat}박", f"{1/(4/beat)}온음표", note_info[2]
+    else:
+        note_name = f"{4/beat:.4}분음표"
+        # return f"{note_info[-1]:3} {beat:<6.3} {4/beat:<6.5}분음표 {note_info[2]}"
+        # return note_info[-1], f"{beat}박", f"{4/beat:.5}분음표", note_info[2]
+    return note_info[-1], f"{beat:.3}박", note_name, note_info[2]
+
+
 def show_notes():
     """Function to show pre-defined notes"""
     for k, v in note.NOTE.items():
-        k = float(k)
-        if 4 / k <= 1:
-            rprint(f"{v[-1]:3} {k:<6.3} {1/(4/k):<6}온음표 {v[1]}")
-        else:
-            rprint(f"{v[-1]:3} {k:<6.3} {4/k:<6.5}분음표 {v[1]}")
+        rprint(*pretty_note_info((k, *v)))
 
 
 def bpm_estimator_librosa(audio_path):
@@ -145,6 +155,7 @@ class MidiAnalyzer:
         print_bound_per_track=float("inf"),
         blind_note_lyrics=False,
         blind_time=False,
+        target_track_list=None,
     ):
         """method to analysis"""
         self.print_bound_per_track = print_bound_per_track
@@ -181,18 +192,28 @@ class MidiAnalyzer:
         for i, track in enumerate(self.mid.tracks):
             console = Console()
             console.rule(
-                f"[#ffffff on #4707a8]Track {i}: {track.name}[/#ffffff on #4707a8]",
+                "[#ffffff on #4707a8]" + f'Track {i}: "{track.name}"'
+                f"[/#ffffff on #4707a8]",
                 style="#ffffff on #4707a8",
             )
-            ta = MidiTrackAnalyzer(self, track)
-            _quantization_error, _quantization_mean = ta.analysis()
-            quantization_error += _quantization_error
-            quantization_mean += _quantization_mean
+            if target_track_list is None or track.name in target_track_list:
+                _quantization_error, _quantization_mean = MidiTrackAnalyzer(
+                    self, track
+                ).analysis()
+                quantization_error += _quantization_error
+                quantization_mean += _quantization_mean
 
-        rprint(
-            "Total quantization error/mean of track error mean: "
-            + f"{float(quantization_error):.5}/{quantization_mean / (i + 1):.5}"
-        )
+        if target_track_list is None or target_track_list:
+            if target_track_list is None:
+                mean_denominator = len(self.mid.tracks)
+            else:
+                mean_denominator = len(target_track_list)
+            total_quantization_mean = quantization_mean / mean_denominator
+            print()
+            rprint(
+                "Total quantization error/mean of track error mean: "
+                + f"{float(quantization_error):.5}/{total_quantization_mean:.5}"
+            )
 
 
 class MidiTrackAnalyzer:
@@ -219,22 +240,6 @@ class MidiTrackAnalyzer:
         self.idx_info = ""
         self.msg = None
 
-    def _quantization_min(self, beat):
-        """select minimum error"""
-        min_error = float("inf")
-        min_error_abs = None
-        min_error_info = None
-        if self.ticks == 0:
-            return None, None, None
-        for predefined_beat, values in note.NOTE.items():
-            error = predefined_beat - beat
-            error_abs = abs(error)
-            if error_abs < min_error:
-                min_error = error
-                min_error_abs = error_abs
-                min_error_info = predefined_beat, *values
-        return min_error, min_error_abs, min_error_info
-
     def _quantization_round_up(self):
         """select upper bound"""
         if self.ticks == 0:
@@ -256,10 +261,27 @@ class MidiTrackAnalyzer:
             quantized_info = predefined_beat, *values
         return error, quantized_info
 
+    def _quantization_min(self, beat):
+        """select minimum error"""
+        min_error = float("inf")
+        min_error_abs = None
+        min_error_info = None
+        if self.ticks == 0:
+            return None, None, None
+        for predefined_beat, values in note.NOTE.items():
+            error = predefined_beat - beat
+            error_abs = abs(error)
+            if error_abs < min_error:
+                min_error = error
+                min_error_abs = error_abs
+                min_error_info = predefined_beat, *values
+        return min_error, min_error_abs, min_error_info
+
     def _quantization_info(self, quantization_color="color(85)"):
         """quantization_info"""
         beat = self.ticks / self.mid_analyzer.ticks_per_beat
         error, error_abs, error_info = self._quantization_min(beat)
+        note_symbol, beat_msg, beat_note_name, note_name = pretty_note_info(error_info)
         # error, error_info = self._quantization_round_up()
         if error != None:
             self.quantization_error += error_abs
@@ -267,8 +289,10 @@ class MidiTrackAnalyzer:
             error = round(error, 3)
             return (
                 f"[{quantization_color}]"
-                + f"{error_info[-1]:2}{error_info[2]}"
+                + f"{note_symbol:2}{note_name}"
                 + f"[/{quantization_color}]"
+                + f"[color(249)]({beat_msg};{beat_note_name})[/color(249)]"
+                + " "
                 + f"[color(245)]{error}[/color(245)]"
                 + f"[color(240)]({float(error_info[0]):.3}-{float(beat):.3})[/color(240)]"
             )

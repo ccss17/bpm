@@ -450,7 +450,10 @@ if __name__ == "__main__":
     # for k, v in bpmlib.NOTE.items():
     #     print(f'{k} {v}')
 
-    # bpmlib.MidiAnalyzer(real_samples[3]["mid"]).analysis()
+    bpmlib.MidiAnalyzer(real_samples[2]["mid"]).analysis(
+        target_track_list=["Musicbox"], blind_time=True
+    )
+    # bpmlib.show_notes()
 
     # 에러 사항 출력:
     # ticks per beat 기반으로 가사와 음표가 몇분음표인지 출력
