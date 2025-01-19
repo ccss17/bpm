@@ -109,29 +109,6 @@ def get_bpm_from_midi(midi_path):
         raise NotImplementedError
 
 
-def patch_lyric(
-    midi_path,
-    out_path,
-    src_encode="cp949",
-    tgt_encode="utf-8",
-):
-    """Function to patch lyric encoding"""
-    mid = mido.MidiFile(midi_path)
-    for track in mid.tracks:
-        for msg in track:
-            if msg.type == "lyrics":
-                msg.text = (
-                    msg.bin()[3:]
-                    .decode(src_encode)
-                    .encode(tgt_encode)
-                    .decode(tgt_encode)
-                )
-    mid.save(
-        out_path,
-        unicode_encode=True,
-    )
-
-
 class MidiAnalyzer:
     """Class for analysis midi file"""
 
@@ -197,9 +174,8 @@ class MidiAnalyzer:
                 style="#ffffff on #4707a8",
             )
             if target_track_list is None or track.name in target_track_list:
-                _quantization_error, _quantization_mean = MidiTrackAnalyzer(
-                    self, track
-                ).analysis()
+                mta = MidiTrackAnalyzer(self, track)
+                _quantization_error, _quantization_mean = mta.analysis()
                 quantization_error += _quantization_error
                 quantization_mean += _quantization_mean
 
@@ -239,6 +215,73 @@ class MidiTrackAnalyzer:
         self.note_queue = {}
         self.idx_info = ""
         self.msg = None
+
+    def analysis(self):
+        """analysis"""
+        note_address = 0
+        lyric = ""
+        for i, msg in enumerate(self.track):
+            self.idx_info = f"[color(244)]{i:4}[/color(244)]"
+            if i > self.mid_analyzer.print_bound_per_track:
+                break
+            self.ticks = msg.time
+            self.msg = msg
+            self.time = mido.tick2second(
+                self.ticks,
+                ticks_per_beat=self.mid_analyzer.ticks_per_beat,
+                tempo=self.tempo,
+            )
+            self.total_time += self.time
+            if msg.type == "note_on":
+                note_address = self._analysis_note_on(msg)
+            elif msg.type == "note_off":
+                self._analysis_note_off(msg)
+            elif msg.type == "lyrics":
+                lyric += self._analysis_lyric(msg, i, note_address)
+                # lyric = msg.bin()[3:].decode("cp949").encode("utf-8").decode("utf-8")
+                # msg.text = f"{lyric}{i}"
+            elif msg.type == "text":
+                self._analysis_text(msg)
+            elif msg.type == "set_tempo":
+                self._analysis_set_tempo(msg)
+            elif msg.type == "end_of_track":
+                self._analysis_end_of_track(msg)
+            elif msg.type == "channel_prefix":
+                self._analysis_channel_prefix(msg)
+            elif msg.type == "track_name":
+                self._analysis_track_name(msg)
+            elif msg.type == "instrument_name":
+                self._analysis_instrument_name(msg)
+            elif msg.type == "smpte_offset":
+                self._analysis_smpte_offset(msg)
+            elif msg.type == "key_signature":
+                self._analysis_key_signature(msg)
+            elif msg.type == "time_signature":
+                self._analysis_time_signature(msg)
+            else:
+                self._printing(
+                    self.idx_info,
+                    self._msg_type_info(f"\[{msg.type}]"),
+                    f"{msg}",
+                    self._time_info(msg.time)
+                    if not self.mid_analyzer.blind_time
+                    else "",
+                )
+
+        quantization_error_mean = 0
+        if self.mid_analyzer.print_bound_per_track == float("inf"):
+            rprint(f"Track lyric encode: {self.text_encode}")
+            rprint(f"Track total time: {self.total_time}")
+            if self.quantization_num != 0:
+                quantization_error_mean = (
+                    self.quantization_error / self.quantization_num
+                )
+                rprint(
+                    "Track total quantization error/mean: "
+                    + f"{self.quantization_error:.5}/{quantization_error_mean:.5}"
+                )
+        print(f'LYRIC: "{lyric}"')
+        return self.quantization_error, quantization_error_mean
 
     def _quantization_round_up(self):
         """select upper bound"""
@@ -281,9 +324,11 @@ class MidiTrackAnalyzer:
         """quantization_info"""
         beat = self.ticks / self.mid_analyzer.ticks_per_beat
         error, error_abs, error_info = self._quantization_min(beat)
-        note_symbol, beat_msg, beat_note_name, note_name = pretty_note_info(error_info)
         # error, error_info = self._quantization_round_up()
         if error != None:
+            note_symbol, beat_msg, beat_note_name, note_name = pretty_note_info(
+                error_info
+            )
             self.quantization_error += error_abs
             self.quantization_num += 1
             error = round(error, 3)
@@ -351,7 +396,7 @@ class MidiTrackAnalyzer:
             else:
                 lyric_style = "bold #98ff29"
                 border_color = f"color({note.NOTE_COLOR_LIST[note_address]})"
-            self._print_lyric(
+            return self._print_lyric(
                 msg,
                 lyric_style=lyric_style,
                 border_color=border_color,
@@ -448,69 +493,6 @@ class MidiTrackAnalyzer:
             self._time_info(msg.time) if not self.mid_analyzer.blind_time else "",
         )
 
-    def analysis(self):
-        """analysis"""
-        note_address = 0
-        for i, msg in enumerate(self.track):
-            self.idx_info = f"[color(244)]{i:4}[/color(244)]"
-            if i > self.mid_analyzer.print_bound_per_track:
-                break
-            self.ticks = msg.time
-            self.msg = msg
-            self.time = mido.tick2second(
-                self.ticks,
-                ticks_per_beat=self.mid_analyzer.ticks_per_beat,
-                tempo=self.tempo,
-            )
-            self.total_time += self.time
-            if msg.type == "note_on":
-                note_address = self._analysis_note_on(msg)
-            elif msg.type == "note_off":
-                self._analysis_note_off(msg)
-            elif msg.type == "lyrics":
-                self._analysis_lyric(msg, i, note_address)
-            elif msg.type == "text":
-                self._analysis_text(msg)
-            elif msg.type == "set_tempo":
-                self._analysis_set_tempo(msg)
-            elif msg.type == "end_of_track":
-                self._analysis_end_of_track(msg)
-            elif msg.type == "channel_prefix":
-                self._analysis_channel_prefix(msg)
-            elif msg.type == "track_name":
-                self._analysis_track_name(msg)
-            elif msg.type == "instrument_name":
-                self._analysis_instrument_name(msg)
-            elif msg.type == "smpte_offset":
-                self._analysis_smpte_offset(msg)
-            elif msg.type == "key_signature":
-                self._analysis_key_signature(msg)
-            elif msg.type == "time_signature":
-                self._analysis_time_signature(msg)
-            else:
-                self._printing(
-                    self.idx_info,
-                    self._msg_type_info(f"\[{msg.type}]"),
-                    f"{msg}",
-                    self._time_info(msg.time)
-                    if not self.mid_analyzer.blind_time
-                    else "",
-                )
-
-        quantization_error_mean = 0
-        if self.mid_analyzer.print_bound_per_track == float("inf"):
-            rprint(f"Track lyric encode: {self.text_encode}")
-            rprint(f"Track total time: {self.total_time}")
-            if self.quantization_num != 0:
-                quantization_error_mean = (
-                    self.quantization_error / self.quantization_num
-                )
-                rprint(
-                    "Track total quantization error/mean: "
-                    + f"{self.quantization_error:.5}/{quantization_error_mean:.5}"
-                )
-        return self.quantization_error, quantization_error_mean
-
     @staticmethod
     def _printing(*strings):
         """print strings"""
@@ -549,13 +531,16 @@ class MidiTrackAnalyzer:
         border_color="white",
     ):
         """print_lyric"""
+
+        def is_alphanum(lyric):
+            for c in lyric:
+                if c not in string.ascii_letters + string.digits:
+                    return False
+            return True
+
         lyric = msg.bin()[3:].decode(self.text_encode).strip()
         border = f"[{border_color}]│[/{border_color}]"
-        lyric_info = (
-            f"{lyric:^7}"
-            if lyric in string.ascii_letters + string.digits
-            else f"{lyric:^6}"
-        )
+        lyric_info = f"{lyric:^7}" if is_alphanum(lyric) else f"{lyric:^6}"
         quantization_info = self._quantization_info()
         self._printing(
             self.idx_info,
@@ -563,6 +548,7 @@ class MidiTrackAnalyzer:
             self._time_info(msg.time) if not self.mid_analyzer.blind_time else "",
             quantization_info,
         )
+        return lyric
 
     def _note_info(self, note):
         """note_info"""

@@ -379,6 +379,84 @@ def test_rich():
         # print(text)
 
 
+def test_patch_encode(
+    midi_path,
+    out_path,
+    src_encode="cp949",
+    tgt_encode="utf-8",
+):
+    """Function to patch lyric encoding"""
+    mid = mido.MidiFile(midi_path)
+    for track in mid.tracks:
+        for i, msg in enumerate(track):
+            if msg.type == "lyrics":
+                msg.text = (
+                    msg.bin()[3:]
+                    .decode(src_encode)
+                    .encode(tgt_encode)
+                    .decode(tgt_encode)
+                )
+    mid.save(
+        out_path,
+        unicode_encode=True,
+    )
+
+
+def test_modify_lyrics(midi_path, out_path):
+    """test_modify_lyrics"""
+    mid = mido.MidiFile(midi_path)
+    for track in mid.tracks:
+        for i, msg in enumerate(track):
+            if i >= 0x100:
+                i %= 0x100
+            if msg.type == "lyrics":
+                msg.text = msg.bin()[3:].decode("cp949").encode("utf-8").decode("utf-8")
+    mid.save(
+        out_path,
+        unicode_encode=True,
+    )
+
+
+def test_insert_lyrics(midi_obj, target_track_list=None):
+    """test_insert_lyrics"""
+    lyric = (
+        "다정했던사람이여나를잊었나벌써나를잊어버렸나그리움만남겨놓고나를잊었나벌써나를잊어버렸나그대지금그누"
+        + "구를사랑하는가굳은약속변해버렸나예전 에는우린서로사랑했는데이젠맘이변해버렸나아이별이그리쉬운가세월"
+        + "가버렸다고 이젠나를잊고서멀리멀리떠나가는가아아나는몰랐네그대마음변할주우울난정말몰 랐었네오나너하나"
+        + "만으을믿고살았네에에에그대만으을믿었네오네가보고파서어나 는어쩌나아아그리우움만쌓이네아이별이그리쉬운"
+        + "가세월가버렸다고이젠나를잊고 서멀리멀리떠나가는가아아나는몰랐네그대마음변할주우울난정말몰랐었네오오오 난"
+        + "너하나만으을믿고살았네에에그대만으을믿었네오네가아보고파서어나는어쩌나 아아그리우움만쌓이네H"
+    )
+    for i, track in enumerate(midi_obj.tracks):
+        if target_track_list is None or track.name in target_track_list:
+            modified_track = []
+            modified_num = 0
+            for j, msg in enumerate(track):
+                modified_track.append(msg)
+                # idx = j + modified_num
+                # if idx >= 0x100:
+                #     idx %= 0x100
+                if msg.type == "note_on":
+                    if modified_num < len(lyric):
+                        modified_track.append(
+                            mido.MetaMessage(
+                                "lyrics", text=f"{lyric[modified_num]}", time=0
+                            )
+                        )
+                    else:
+                        modified_track.append(
+                            mido.MetaMessage(
+                                "lyrics", text=f"x{modified_num:X}", time=0
+                            )
+                        )
+                    modified_num += 1
+                    msg.note -= 5
+                elif msg.type == "note_off":
+                    msg.note -= 5
+            midi_obj.tracks[i] = modified_track
+    return midi_obj
+
+
 if __name__ == "__main__":
     samples = [
         {
@@ -437,7 +515,7 @@ if __name__ == "__main__":
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=40)
     # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(print_bound_per_track=20)
     # bpmlib.MidiAnalyzer(samples[0]["mid"]).analysis()
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis()
+
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_note_lyrics=True)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_time=True)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(convert_1_to_0=True)
@@ -447,13 +525,6 @@ if __name__ == "__main__":
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(
     #     convert_1_to_0=True, blind_note_lyrics=True
     # )
-    # for k, v in bpmlib.NOTE.items():
-    #     print(f'{k} {v}')
-
-    bpmlib.MidiAnalyzer(real_samples[2]["mid"]).analysis(
-        target_track_list=["Musicbox"], blind_time=True
-    )
-    # bpmlib.show_notes()
 
     # 에러 사항 출력:
     # ticks per beat 기반으로 가사와 음표가 몇분음표인지 출력
@@ -467,7 +538,21 @@ if __name__ == "__main__":
     # midi_path = samples[3]["mid"]
     # idx = midi_path.find(".")
     # out_path = midi_path[:idx] + "(utf-8)" + midi_path[idx:]
-    # bpmlib.patch_lyric(midi_path, out_path, src_encode="cp949", tgt_encode="utf-8")
+    # test_patch_encode(midi_path, out_path, src_encode="cp949", tgt_encode="utf-8")
+
+    # ma = bpmlib.MidiAnalyzer(samples[2]["mid"])
+    # ma.analysis(blind_time=True)
+    # modified_midi_path = "test.mid"
+    # test_modify_lyrics(samples[2]["mid"], modified_midi_path)
+    # bpmlib.MidiAnalyzer(modified_midi_path).analysis(blind_time=True)
+
+    # ma.analysis(target_track_list=["Musicbox"], blind_time=True)
+    # ma = bpmlib.MidiAnalyzer(real_samples[2]["mid"])
+    # test_insert_lyrics(ma.mid, target_track_list=None)
+    # modified_midi_path = "test2.mid"
+    # ma.mid.save(modified_midi_path, unicode_encode=True)
+    # ma = bpmlib.MidiAnalyzer(modified_midi_path)
+    # ma.analysis(target_track_list=["Musicbox"], blind_time=True)
 
     #
     # TEST RICH
