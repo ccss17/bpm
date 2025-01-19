@@ -1,192 +1,70 @@
-REST = {
-    4: ("whole rest", "온쉼표", "𝄻"),
-    3: ("dotted whole rest", "점2분쉼표", "𝄼."),
-    2: ("half rest", "2분쉼표", "𝄼"),
-    1.5: ("dotted quarter rest", "점4분쉼표", "𝄽."),
-    1: ("quarter rest", "4분쉼표", "𝄽"),
-    0.75: ("dotted eighth rest", "점8분쉼표", "𝄾."),
-    0.5: ("eighth rest", "8분쉼표", "𝄾"),
-    0.375: ("dotted sixteenth rest", "점16분쉼표", "𝄿."),
-    0.25: ("sixteenth rest", "16분쉼표", "𝄿"),
-    0.1875: ("dotted thirty-second rest", "점32분쉼표", "𝅀."),
-    0.125: ("thirty-second rest", "32분쉼표", "𝅀"),
-}
+"""note rest information dictionary"""
 
-NOTE = {
-    4: ("whole note", "온음표", "𝅝"),
-    3: ("dotted whole note", "점2분음표", "𝅗𝅥."),
-    2: ("half note", "2분음표", "𝅗𝅥"),
-    1.5: ("dotted quarter note", "점4분음표", "♩."),
-    1: ("quarter note", "4분음표", "♩"),
-    0.75: ("dotted eighth note", "점8분음표", "♪."),
-    0.5: ("eighth note", "8분음표", "♪"),
-    0.375: ("dotted sixteenth note", "점16분음표", "𝅘𝅥𝅯."),
-    0.25: ("sixteenth note", "16분음표", "𝅘𝅥𝅯"),
-    0.1875: ("dotted thirty-second note", "점32분음표", "𝅘𝅥𝅰."),
-    0.125: ("thirty-second note", "32분음표", "𝅘𝅥𝅰"),
-}
+from collections import namedtuple
+from enum import Enum
 
-# REST = {
-#     #
-#     # 4/4 박자에서 온쉼표가 최대 길이
-#     #
-#     # 62: ("quadruple dotted quarter rest", "네겹점8온쉼표", "𝆶⸬"),
-#     # 60: ("triple dotted quarter rest", "세겹점8온쉼표", "𝆶…"),
-#     # 56: ("double dotted quarter rest", "겹점8온쉼표", "𝆶‥"),
-#     # 48: ("dotted quarter rest", "점8온쉼표", "𝆶."),
-#     # 32: ("quarter rest", "8온쉼표", "𝆶"),
-#     # 31: ("quadruple dotted quarter rest", "네겹점4온쉼표", "𝅜𝅥⸬"),
-#     # 30: ("triple dotted quarter rest", "세겹점4온쉼표", "𝅜𝅥…"),
-#     # 28: ("double dotted quarter rest", "겹점4온쉼표", "𝅜𝅥‥"),
-#     # 24: ("dotted quarter rest", "점4온쉼표", "𝅜𝅥."),
-#     # 16: ("quarter rest", "4온쉼표", "𝅜"),
-#     # 15.5: ("quadruple dotted double rest", "네겹점겹온쉼표", "𝄺⸬"),
-#     # 15: ("triple dotted double rest", "세겹점겹온쉼표", "𝄺…"),
-#     # 14: ("double dotted double rest", "겹점겹온쉼표", "𝄺‥"),
-#     # 12: ("dotted double rest", "점겹온쉼표", "𝄺."),
-#     # 8: ("double rest", "겹온쉼표", "𝄺"),
-#     # 7.75: ("quadruple dotted whole rest", "네겹점온쉼표", "𝄻⸬"),
-#     # 7.5: ("triple dotted whole rest", "세겹점온쉼표", "𝄻…"),
-#     # 7: ("double dotted whole rest", "겹점온쉼표", "𝄻‥"),
-#     # 6: ("dotted whole rest", "점온쉼표", "𝄻."),
-#     4: ("whole rest", "온쉼표", "𝄻"),
-#     # 3.875: ("quadruple dotted whole rest", "네겹점2분쉼표", "𝄼⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 3.75: ("triple dotted whole rest", "세겹점2분쉼표", "𝄼…"),
-#     # 3.5: ("double dotted whole rest", "겹점2분쉼표", "𝄼‥"),
-#     3: ("dotted whole rest", "점2분쉼표", "𝄼."),
-#     2: ("half rest", "2분쉼표", "𝄼"),
-#     # 1.9375: ("quadruple dotted quarter rest", "네겹점4분쉼표", "𝄽⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 1.875: ("triple dotted quarter rest", "세겹점4분쉼표", "𝄽…"),
-#     # 1.75: ("double dotted quarter rest", "겹점4분쉼표", "𝄽‥"),
-#     1.5: ("dotted quarter rest", "점4분쉼표", "𝄽."),
-#     1: ("quarter rest", "4분쉼표", "𝄽"),
-#     # 0.96875: ("quadruple dotted eighth rest", "네겹점8분쉼표", "𝄾⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 0.9375: ("triple dotted eighth rest", "세겹점8분쉼표", "𝄾…"),
-#     # 0.875: ("double dotted eighth rest", "겹점8분쉼표", "𝄾‥"),
-#     0.75: ("dotted eighth rest", "점8분쉼표", "𝄾."),
-#     0.5: ("eighth rest", "8분쉼표", "𝄾"),
-#     # 0.484375: ("quadruple dotted sixteenth rest", "네겹점16분쉼표", "𝄿⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 0.46875: ("triple dotted sixteenth rest", "세겹점16분쉼표", "𝄿…"),
-#     # 0.4375: ("double dotted sixteenth rest", "겹점16분쉼표", "𝄿‥"),
-#     0.375: ("dotted sixteenth rest", "점16분쉼표", "𝄿."),
-#     0.25: ("sixteenth rest", "16분쉼표", "𝄿"),
-#     # 0.2421875: ("quadruple dotted thirty-second rest", "네겹점32분쉼표", "𝅀⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 0.234375: ("triple dotted thirty-second rest", "세겹점32분쉼표", "𝅀…"),
-#     # 0.21875: ("double dotted thirty-second rest", "겹점32분쉼표", "𝅀‥"),
-#     0.1875: ("dotted thirty-second rest", "점32분쉼표", "𝅀."),
-#     0.125: ("thirty-second rest", "32분쉼표", "𝅀"),
-#     #
-#     # 32분쉼표가 최소 단위 길이
-#     #
-#     # 0.12109375: ("quadruple dotted sixty-fourth rest", "네겹점64분쉼표", "𝅁⸬"),
-#     # 0.1171875: ("triple dotted sixty-fourth rest", "세겹점64분쉼표", "𝅁…"),
-#     # 0.109375: ("double dotted sixty-fourth rest", "겹점64분쉼표", "𝅁‥"),
-#     # 0.09375: ("dotted sixty-fourth rest", "점64분쉼표", "𝅁."),
-#     # 0.0625: ("sixty-fourth rest", "64분쉼표", "𝅁"),
-#     # 0.060546875: ("triple dotted hundred twenty-eighth rest", "세겹점128분쉼표", "𝅂…"),
-#     # 0.05859375: ("triple dotted hundred twenty-eighth rest", "세겹점128분쉼표", "𝅂…"),
-#     # 0.0546875: ("double dotted hundred twenty-eighth rest", "겹점128분쉼표", "𝅂‥"),
-#     # 0.046875: ("dotted hundred twenty-eighth rest", "점128분쉼표", "𝅂."),
-#     # 0.03125: ("hundred twenty-eighth rest", "128분쉼표", "𝅂"),
-#     # 0.0302734375: (
-#     #     "quadruple dotted two hundred fifty-sixth rest",
-#     #     "네겹점256분쉼표",
-#     #     "𝅂⸬",
-#     # ),
-#     # 0.029296875: (
-#     #     "triple dotted two hundred fifty-sixth rest",
-#     #     "세겹점256분쉼표",
-#     #     "𝅂…",
-#     # ),
-#     # 0.02734375: ("double dotted two hundred fifty-sixth rest", "겹점256분쉼표", "𝅂‥"),
-#     # 0.0234375: ("dotted two hundred fifty-sixth rest", "점256분쉼표", "𝅂."),
-#     # 0.015625: ("two hundred fifty-sixth rest", "256분쉼표", "𝅂"),
-# }
+NoteRestNamedTuple = namedtuple("Rest", ["beat", "name_eng", "name_kor", "symbol"])
 
-# NOTE = {
-#     #
-#     # 4/4 박자에서 온음표가 최대 길이
-#     #
-#     # 62: ("quadruple dotted quarter note", "네겹점8온음표", "𝆶⸬"),
-#     # 60: ("triple dotted quarter note", "세겹점8온음표", "𝆶…"),
-#     # 56: ("double dotted quarter note", "겹점8온음표", "𝆶‥"),
-#     # 48: ("dotted quarter note", "점8온음표", "𝆶."),
-#     # 32: ("quarter note", "8온음표", "𝆶"),
-#     # 31: ("quadruple dotted quarter note", "네겹점4온음표", "𝅜𝅥⸬"),
-#     # 30: ("triple dotted quarter note", "세겹점4온음표", "𝅜𝅥…"),
-#     # 28: ("double dotted quarter note", "겹점4온음표", "𝅜𝅥‥"),
-#     # 24: ("dotted quarter note", "점4온음표", "𝅜𝅥."),
-#     # 16: ("quarter note", "4온음표", "𝅜"),
-#     # 15.5: ("quadruple dotted double note", "네겹점겹온음표", "𝅜⸬"),
-#     # 15: ("triple dotted double note", "세겹점겹온음표", "𝅜…"),
-#     # 14: ("double dotted double note", "겹점겹온음표", "𝅜‥"),
-#     # 12: ("dotted double note", "점겹온음표", "𝅜."),
-#     # 8: ("double note", "겹온음표", "𝅜"),
-#     # 7.75: ("quadruple dotted whole note", "네겹점온음표", "𝅝⸬"),
-#     # 7.5: ("triple dotted whole note", "세겹점온음표", "𝅝…"),
-#     # 7: ("double dotted whole note", "겹점온음표", "𝅝‥"),
-#     # 6: ("dotted whole note", "점온음표", "𝅝."),
-#     4: ("whole note", "온음표", "𝅝"),
-#     # 3.875: ("quadruple dotted whole note", "네겹점2분음표", "𝅗𝅥⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 3.75: ("triple dotted whole note", "세겹점2분음표", "𝅗𝅥…"),
-#     # 3.5: ("double dotted whole note", "겹점2분음표", "𝅗𝅥‥"),
-#     3: ("dotted whole note", "점2분음표", "𝅗𝅥."),
-#     2: ("half note", "2분음표", "𝅗𝅥"),
-#     # 1.9375: ("quadruple dotted quarter note", "네겹점4분음표", "♩⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 1.875: ("triple dotted quarter note", "세겹점4분음표", "♩…"),
-#     # 1.75: ("double dotted quarter note", "겹점4분음표", "♩‥"),
-#     1.5: ("dotted quarter note", "점4분음표", "♩."),
-#     1: ("quarter note", "4분음표", "♩"),
-#     # 0.96875: ("quadruple dotted eighth note", "네겹점8분음표", "♪⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 0.9375: ("triple dotted eighth note", "세겹점8분음표", "♪…"),
-#     # 0.875: ("double dotted eighth note", "겹점8분음표", "♪‥"),
-#     0.75: ("dotted eighth note", "점8분음표", "♪."),
-#     0.5: ("eighth note", "8분음표", "♪"),
-#     # 0.484375: ("quadruple dotted sixteenth note", "네겹점16분음표", "𝅘𝅥𝅯⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 0.46875: ("triple dotted sixteenth note", "세겹점16분음표", "𝅘𝅥𝅯…"),
-#     # 0.4375: ("double dotted sixteenth note", "겹점16분음표", "𝅘𝅥𝅯‥"),
-#     0.375: ("dotted sixteenth note", "점16분음표", "𝅘𝅥𝅯."),
-#     0.25: ("sixteenth note", "16분음표", "𝅘𝅥𝅯"),
-#     # 0.2421875: ("quadruple dotted thirty-second note", "네겹점32분음표", "𝅘𝅥𝅰⸬"), # 겹점은 일반적으로 사용되지 않음
-#     # 0.234375: ("triple dotted thirty-second note", "세겹점32분음표", "𝅘𝅥𝅰…"),
-#     # 0.21875: ("double dotted thirty-second note", "겹점32분음표", "𝅘𝅥𝅰‥"),
-#     0.1875: ("dotted thirty-second note", "점32분음표", "𝅘𝅥𝅰."),
-#     0.125: ("thirty-second note", "32분음표", "𝅘𝅥𝅰"),
-#     #
-#     # 32분음표가 최소 단위 길이
-#     #
-#     # 0.12109375: ("quadruple dotted sixty-fourth note", "네겹점64분음표", "𝅘𝅥𝅱⸬"),
-#     # 0.1171875: ("triple dotted sixty-fourth note", "세겹점64분음표", "𝅘𝅥𝅱…"),
-#     # 0.109375: ("double dotted sixty-fourth note", "겹점64분음표", "𝅘𝅥𝅱‥"),
-#     # 0.09375: ("dotted sixty-fourth note", "점64분음표", "𝅘𝅥𝅱."),
-#     # 0.0625: ("sixty-fourth note", "64분음표", "𝅘𝅥𝅱"),
-#     # 0.060546875: ("triple dotted hundred twenty-eighth note", "세겹점128분음표", "𝅘𝅥𝅲…"),
-#     # 0.05859375: ("triple dotted hundred twenty-eighth note", "세겹점128분음표", "𝅘𝅥𝅲…"),
-#     # 0.0546875: ("double dotted hundred twenty-eighth note", "겹점128분음표", "𝅘𝅥𝅲‥"),
-#     # 0.046875: ("dotted hundred twenty-eighth note", "점128분음표", "𝅘𝅥𝅲."),
-#     # 0.03125: ("hundred twenty-eighth note", "128분음표", "𝅘𝅥𝅲"),
-#     # 0.0302734375: (
-#     #     "quadruple dotted two hundred fifty-sixth note",
-#     #     "네겹점256분음표",
-#     #     "𝅘𝅥𝅲⸬",
-#     # ),
-#     # 0.029296875: (
-#     #     "triple dotted two hundred fifty-sixth note",
-#     #     "세겹점256분음표",
-#     #     "𝅘𝅥𝅲…",
-#     # ),
-#     # 0.02734375: ("double dotted two hundred fifty-sixth note", "겹점256분음표", "𝅘𝅥𝅲‥"),
-#     # 0.0234375: ("dotted two hundred fifty-sixth note", "점256분음표", "𝅘𝅥𝅲."),
-#     # 0.015625: ("two hundred fifty-sixth note", "256분음표", "𝅘𝅥𝅲"),
-# }
 
-NOTE_COLOR_LIST = [
+class Rest(Enum):
+    """Rest Enum"""
+
+    WHOLE_REST = NoteRestNamedTuple(4, "whole rest", "온쉼표", "𝄻")
+    DOTTED_WHOLE_REST = NoteRestNamedTuple(3, "dotted whole rest", "점2분쉼표", "𝄼.")
+    HALF_REST = NoteRestNamedTuple(2, "half rest", "2분쉼표", "𝄼")
+    DOTTED_QUARTER_REST = NoteRestNamedTuple(
+        1.5, "dotted quarter rest", "점4분쉼표", "𝄽."
+    )
+    QUARTER_REST = NoteRestNamedTuple(1, "quarter rest", "4분쉼표", "𝄽")
+    DOTTED_EIGHTH_REST = NoteRestNamedTuple(
+        0.75, "dotted eighth rest", "점8분쉼표", "𝄾."
+    )
+    EIGHTH_REST = NoteRestNamedTuple(0.5, "eighth rest", "8분쉼표", "𝄾")
+    DOTTED_SIXTEENTH_REST = NoteRestNamedTuple(
+        0.375, "dotted sixteenth rest", "점16분쉼표", "𝄿."
+    )
+    SIXTEENTH_REST = NoteRestNamedTuple(0.25, "sixteenth rest", "16분쉼표", "𝄿")
+    DOTTED_THIRTY_SECOND_REST = NoteRestNamedTuple(
+        0.1875, "dotted thirty-second rest", "점32분쉼표", "𝅀."
+    )
+    THIRTY_SECOND_REST = NoteRestNamedTuple(
+        0.125, "thirty-second rest", "32분쉼표", "𝅀"
+    )
+
+
+class Note(Enum):
+    """Note Enum"""
+
+    WHOLE_NOTE = NoteRestNamedTuple(4, "whole note", "온음표", "𝅝")
+    DOTTED_WHOLE_NOTE = NoteRestNamedTuple(3, "dotted whole note", "점2분음표", "𝅗𝅥.")
+    HALF_NOTE = NoteRestNamedTuple(2, "half note", "2분음표", "𝅗𝅥")
+    DOTTED_QUARTER_NOTE = NoteRestNamedTuple(
+        1.5, "dotted quarter note", "점4분음표", "♩."
+    )
+    QUARTER_NOTE = NoteRestNamedTuple(1, "quarter note", "4분음표", "♩")
+    DOTTED_EIGHTH_NOTE = NoteRestNamedTuple(
+        0.75, "dotted eighth note", "점8분음표", "♪."
+    )
+    EIGHTH_NOTE = NoteRestNamedTuple(0.5, "eighth note", "8분음표", "♪")
+    DOTTED_SIXTEENTH_NOTE = NoteRestNamedTuple(
+        0.375, "dotted sixteenth note", "점16분음표", "𝅘𝅥𝅯."
+    )
+    SIXTEENTH_NOTE = NoteRestNamedTuple(0.25, "sixteenth note", "16분음표", "𝅘𝅥𝅯")
+    DOTTED_THIRTY_SECOND_NOTE = NoteRestNamedTuple(
+        0.1875, "dotted thirty-second note", "점32분음표", "𝅘𝅥𝅰."
+    )
+    THIRTY_SECOND_NOTE = NoteRestNamedTuple(
+        0.125, "thirty-second note", "32분음표", "𝅘𝅥𝅰"
+    )
+
+
+NOTE_COLOR_LIST = (
     15,
     165,
     47,
-    9,
     87,
     121,
+    9,
     27,
     190,
     1,
@@ -225,4 +103,4 @@ NOTE_COLOR_LIST = [
     226,
     230,
     217,
-]
+)

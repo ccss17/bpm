@@ -457,6 +457,13 @@ def test_insert_lyrics(midi_obj, target_track_list=None):
     return midi_obj
 
 
+def test_show_notes():
+    """Function to show pre-defined notes"""
+    for k, v in note.NOTE.items():
+        # rprint(*pretty_note_info((k, *v)))
+        pass
+
+
 if __name__ == "__main__":
     samples = [
         {
@@ -541,7 +548,10 @@ if __name__ == "__main__":
     # test_patch_encode(midi_path, out_path, src_encode="cp949", tgt_encode="utf-8")
 
     ma = bpmlib.MidiAnalyzer(samples[2]["mid"])
-    ma.analysis(blind_time=True)
+    ma.analysis(blind_time=True, target_track_list=["Melody"], print_bound_per_track=20)
+    ma.partition()
+    ma.analysis(blind_time=True, target_track_list=["Melody"], print_bound_per_track=20)
+
     # modified_midi_path = "test.mid"
     # test_modify_lyrics(samples[2]["mid"], modified_midi_path)
     # bpmlib.MidiAnalyzer(modified_midi_path).analysis(blind_time=True)
@@ -553,6 +563,10 @@ if __name__ == "__main__":
     # ma.mid.save(modified_midi_path, unicode_encode=True)
     # ma = bpmlib.MidiAnalyzer(modified_midi_path)
     # ma.analysis(target_track_list=["Musicbox"], blind_time=True)
+
+    # midi_path = "exported_midi/ba_05688_-4_a_s02_m_02(utf-8).mid"
+    # ma = bpmlib.MidiAnalyzer(midi_path)
+    # ma.analysis(blind_time=True)
 
     #
     # TEST RICH
