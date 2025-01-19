@@ -30,13 +30,19 @@ def pretty_note_info(note_info):
     beat = float(note_info[0])
     if 4 / beat <= 1:
         note_name = f"{1/(4/beat)}온음표"
-        # return f"{note_info[-1]:3} {beat:<6.3} {1/(4/beat):<6}온음표 {note_info[2]}"
-        # return note_info[-1], f"{beat}박", f"{1/(4/beat)}온음표", note_info[2]
     else:
         note_name = f"{4/beat:.4}분음표"
-        # return f"{note_info[-1]:3} {beat:<6.3} {4/beat:<6.5}분음표 {note_info[2]}"
-        # return note_info[-1], f"{beat}박", f"{4/beat:.5}분음표", note_info[2]
     return note_info[-1], f"{beat:.3}박", note_name, note_info[2]
+
+
+def pretty_rest_info(rest_info):
+    """pretty_rest_info(rest_info)"""
+    beat = float(rest_info[0])
+    if 4 / beat <= 1:
+        rest_name = f"{1/(4/beat)}온쉼표"
+    else:
+        rest_name = f"{4/beat:.4}분쉼표"
+    return rest_info[-1], f"{beat:.3}박", rest_name, rest_info[2]
 
 
 def show_notes():
@@ -283,35 +289,15 @@ class MidiTrackAnalyzer:
         print(f'LYRIC: "{lyric}"')
         return self.quantization_error, quantization_error_mean
 
-    def _quantization_round_up(self):
-        """select upper bound"""
-        if self.ticks == 0:
-            return None, None
-        beat = self.ticks / self.mid_analyzer.ticks_per_beat
-        quantized_info = error = None
-        for i, (predefined_beat, values) in enumerate(note.NOTE.items()):
-            error = abs(beat - predefined_beat)
-            if i == 0:
-                if beat > predefined_beat:
-                    quantized_info = predefined_beat, *values
-                    break
-            else:
-                prev_predefined_beat = list(note.NOTE.keys())[i - 1]
-                if beat > predefined_beat and beat < prev_predefined_beat:
-                    quantized_info = predefined_beat, *note.NOTE[prev_predefined_beat]
-                    break
-        else:
-            quantized_info = predefined_beat, *values
-        return error, quantized_info
-
-    def _quantization_min(self, beat):
+    def _quantization_min(self, beat, as_rest=False):
         """select minimum error"""
         min_error = float("inf")
         min_error_abs = None
         min_error_info = None
         if self.ticks == 0:
             return None, None, None
-        for predefined_beat, values in note.NOTE.items():
+        note_rest_dict = note.REST if as_rest else note.NOTE
+        for predefined_beat, values in note_rest_dict.items():
             error = predefined_beat - beat
             error_abs = abs(error)
             if error_abs < min_error:
@@ -320,14 +306,15 @@ class MidiTrackAnalyzer:
                 min_error_info = predefined_beat, *values
         return min_error, min_error_abs, min_error_info
 
-    def _quantization_info(self, quantization_color="color(85)"):
+    def _quantization_info(self, quantization_color="color(85)", as_rest=False):
         """quantization_info"""
         beat = self.ticks / self.mid_analyzer.ticks_per_beat
-        error, error_abs, error_info = self._quantization_min(beat)
-        # error, error_info = self._quantization_round_up()
+        error, error_abs, error_info = self._quantization_min(beat, as_rest=as_rest)
         if error != None:
-            note_symbol, beat_msg, beat_note_name, note_name = pretty_note_info(
-                error_info
+            note_symbol, beat_msg, beat_note_name, note_name = (
+                pretty_rest_info(error_info)
+                if as_rest
+                else pretty_note_info(error_info)
             )
             self.quantization_error += error_abs
             self.quantization_num += 1
@@ -336,10 +323,9 @@ class MidiTrackAnalyzer:
                 f"[{quantization_color}]"
                 + f"{note_symbol:2}{note_name}"
                 + f"[/{quantization_color}]"
-                + f"[color(249)]({beat_msg};{beat_note_name})[/color(249)]"
-                + " "
-                + f"[color(245)]{error}[/color(245)]"
-                + f"[color(240)]({float(error_info[0]):.3}-{float(beat):.3})[/color(240)]"
+                + f"[color(249)]{beat_msg}[/color(249)]"
+                + f"[color(240)]-{float(beat):.3}=[/color(240)]"
+                + f"[color(240)]{error}[/color(240)]"
             )
         else:
             return ""
@@ -353,7 +339,7 @@ class MidiTrackAnalyzer:
                 msg.note,
                 color=f"color({note.NOTE_COLOR_LIST[note_address % len(note.NOTE_COLOR_LIST)]})",
             )
-            quantization_info = self._quantization_info()
+            quantization_info = self._quantization_info(as_rest=True)
             self._printing(
                 self.idx_info,
                 f"{note_msg}",
@@ -372,7 +358,7 @@ class MidiTrackAnalyzer:
                 color = f"color({note.NOTE_COLOR_LIST[note_idx]})"
                 del self.note_queue[note_idx]
             note_msg = self._note_off_info(msg.note, color=color)
-            quantization_info = self._quantization_info()
+            quantization_info = self._quantization_info(as_rest=False)
             self._printing(
                 self.idx_info,
                 f"{note_msg}",

@@ -540,8 +540,8 @@ if __name__ == "__main__":
     # out_path = midi_path[:idx] + "(utf-8)" + midi_path[idx:]
     # test_patch_encode(midi_path, out_path, src_encode="cp949", tgt_encode="utf-8")
 
-    # ma = bpmlib.MidiAnalyzer(samples[2]["mid"])
-    # ma.analysis(blind_time=True)
+    ma = bpmlib.MidiAnalyzer(samples[2]["mid"])
+    ma.analysis(blind_time=True)
     # modified_midi_path = "test.mid"
     # test_modify_lyrics(samples[2]["mid"], modified_midi_path)
     # bpmlib.MidiAnalyzer(modified_midi_path).analysis(blind_time=True)
