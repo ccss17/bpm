@@ -2,10 +2,11 @@
 
 import pathlib
 
-import bpmlib
-
 import mido
 from rich import print
+
+import bpmlib
+import note
 
 
 def test_bpm_estimator_librosa(audio_path):
@@ -523,14 +524,14 @@ if __name__ == "__main__":
     # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(print_bound_per_track=20)
     # bpmlib.MidiAnalyzer(samples[0]["mid"]).analysis()
 
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_note_lyrics=True)
+    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_note=True)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_time=True)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(convert_1_to_0=True)
     # bpmlib.MidiAnalyzer(samples[3]["mid"])
     # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(convert_1_to_0=True)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=15)
     # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(
-    #     convert_1_to_0=True, blind_note_lyrics=True
+    #     convert_1_to_0=True, blind_note=True
     # )
 
     # 에러 사항 출력:
@@ -547,17 +548,20 @@ if __name__ == "__main__":
     # out_path = midi_path[:idx] + "(utf-8)" + midi_path[idx:]
     # test_patch_encode(midi_path, out_path, src_encode="cp949", tgt_encode="utf-8")
 
-    ma = bpmlib.MidiAnalyzer(samples[2]["mid"])
-    ma.analysis(blind_time=True, target_track_list=["Melody"], print_bound_per_track=20)
-    ma.partition()
-    ma.analysis(blind_time=True, target_track_list=["Melody"], print_bound_per_track=20)
+    # ma = bpmlib.MidiAnalyzer(samples[2]["mid"])
+    # ma.analysis(blind_time=True, target_track_list=["Melody"], print_bound_per_track=20)
+    # ma.partition()
+    # ma.analysis(blind_time=True, print_bound_per_track=20)
+    # ma.analysis(print_bound_per_track=20)
+    # ma.analysis()
 
     # modified_midi_path = "test.mid"
     # test_modify_lyrics(samples[2]["mid"], modified_midi_path)
     # bpmlib.MidiAnalyzer(modified_midi_path).analysis(blind_time=True)
 
+    # ma = bpmlib.MidiAnalyzer(real_samples[3]["mid"])
     # ma.analysis(target_track_list=["Musicbox"], blind_time=True)
-    # ma = bpmlib.MidiAnalyzer(real_samples[2]["mid"])
+    # ma.analysis()
     # test_insert_lyrics(ma.mid, target_track_list=None)
     # modified_midi_path = "test2.mid"
     # ma.mid.save(modified_midi_path, unicode_encode=True)
