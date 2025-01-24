@@ -32,7 +32,9 @@ def get_tempo_from_midi(midi_path):
     return tempo
 
 
-def trim_head_tail_silence(audio_path, sr, db_threshold=-40, win_l=300, win_s=20):
+def trim_head_tail_silence(
+    audio_path, sr, db_threshold=-40, win_l=300, win_s=20
+):
     """
     주어진 오디오에서 non-silence 구간의 시작과 끝 시간을 반환
 
@@ -131,7 +133,9 @@ def load_note_pitch_duration_from_midi(midi_path, start=None, end=None):
             note_duration.append(error)
             note_pitch.append(0)
 
-    note_duration.append(notes[len(notes) - 1].end - notes[len(notes) - 1].start)
+    note_duration.append(
+        notes[len(notes) - 1].end - notes[len(notes) - 1].start
+    )
     note_pitch.append(notes[len(notes) - 1].pitch)
 
     return np.array(note_pitch), np.array(note_duration)

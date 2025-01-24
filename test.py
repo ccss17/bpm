@@ -1,27 +1,36 @@
 """Module for test code"""
 
-import pathlib
-
 import mido
-from rich import print
+from rich import print as rprint
+from rich import pretty
+from rich.panel import Panel
+from rich.console import Console
+from rich.style import Style
+from rich.text import Text
+# from rich import inspect
+# from rich.columns import Columns
+# from rich.console import Group
+# from rich.padding import Padding
+# from rich.color import Color
 
 import bpmlib
-import note
+import midia
+from note import Note, Rest
 
 
 def test_bpm_estimator_librosa(audio_path):
     """Test bpm_estimator_librosa"""
-    print(round(bpmlib.bpm_estimator_librosa(audio_path)[0]))
+    rprint(round(bpmlib.bpm_estimator_librosa(audio_path)[0]))
 
 
 def test_bpm_estimator_pretty_midi(midi_path):
     """Test bpm_estimator_pretty_midi"""
-    print(round(bpmlib.bpm_estimator_pretty_midi(midi_path)))
+    rprint(round(bpmlib.bpm_estimator_pretty_midi(midi_path)))
 
 
 def test_get_bpm_from_midi(midi_path):
     """Test get_bpm_from_midi"""
-    print(round(bpmlib.get_bpm_from_midi(midi_path)))
+    rprint(round(bpmlib.bpm_from_midi_file(midi_path)))
 
 
 def test_create_sample_midi1(midi_path):
@@ -31,7 +40,9 @@ def test_create_sample_midi1(midi_path):
     track = mido.MidiTrack()
     mid.tracks.append(track)
 
-    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(
+        mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0)
+    )
     track.append(mido.Message("note_on", note=64, velocity=127, time=4))
     track.append(mido.Message("note_off", note=64, velocity=127, time=8))
     track.append(mido.Message("note_on", note=74, velocity=127, time=4))
@@ -48,7 +59,9 @@ def test_create_sample_midi2(midi_path):
     track = mido.MidiTrack()
     mid.tracks.append(track)
 
-    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(
+        mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0)
+    )
     track.append(mido.Message("note_on", note=64, velocity=64, time=4))
     track.append(mido.MetaMessage("lyrics", text="a", time=4))
     track.append(mido.Message("note_off", note=64, velocity=127, time=8))
@@ -67,7 +80,9 @@ def test_create_sample_midi3(midi_path):
     track = mido.MidiTrack()
     mid.tracks.append(track)
 
-    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(
+        mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0)
+    )
     track.append(mido.Message("note_on", note=64, velocity=64, time=4))
     track.append(mido.MetaMessage("lyrics", text="a", time=6))
     track.append(mido.MetaMessage("lyrics", text="b", time=4))
@@ -83,7 +98,9 @@ def test_create_sample_midi4(midi_path):
     track = mido.MidiTrack()
     mid.tracks.append(track)
 
-    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(
+        mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0)
+    )
     track.append(mido.Message("note_on", note=64, velocity=64, time=2))
     track.append(mido.MetaMessage("lyrics", text="a", time=12))
     track.append(mido.Message("note_on", note=74, velocity=64, time=2))
@@ -101,7 +118,9 @@ def test_create_sample_midi5(midi_path):
     track = mido.MidiTrack()
     mid.tracks.append(track)
 
-    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(
+        mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0)
+    )
 
     track.append(mido.Message("note_on", note=66, velocity=66, time=0))
     track.append(mido.Message("note_off", note=66, velocity=127, time=1))
@@ -137,7 +156,9 @@ def test_create_sample_midi6(midi_path):
     track = mido.MidiTrack()
     mid.tracks.append(track)
 
-    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(
+        mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0)
+    )
     track.append(mido.Message("note_on", note=61, velocity=64, time=1))
     track.append(mido.Message("note_off", note=61, velocity=127, time=1))
 
@@ -170,7 +191,9 @@ def test_create_sample_midi7(midi_path):
     track = mido.MidiTrack()
     mid.tracks.append(track)
 
-    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(
+        mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0)
+    )
     track.append(mido.Message("note_on", note=61, velocity=64, time=0))
     track.append(mido.Message("note_off", note=61, velocity=127, time=1))
 
@@ -259,7 +282,9 @@ def test_create_sample_midi8(midi_path):
     track = mido.MidiTrack()
     mid.tracks.append(track)
 
-    track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0))
+    track.append(
+        mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(60), time=0)
+    )
     track.append(mido.Message("note_on", note=64, velocity=64, time=2))
     track.append(mido.MetaMessage("lyrics", text="a", time=12))
     track.append(mido.Message("note_on", note=74, velocity=64, time=2))
@@ -281,31 +306,21 @@ def test_create_sample_midi8(midi_path):
 
 
 def test_rich():
-    from rich import inspect
-    from rich import print
-    from rich.columns import Columns
-    from rich import pretty
-    from rich.panel import Panel
-    from rich.color import Color
-    from rich.console import Console
-    from rich.console import Group
-    from rich.style import Style
-    from rich.text import Text
-    from rich.padding import Padding
+    """test_rich"""
 
-    print("[italic red]Hello[/italic red] World!")
+    rprint("[italic red]Hello[/italic red] World!")
     pretty.install()
-    print(Panel.fit("[bold yellow]Hi, I'm a Panel", border_style="red"))
+    rprint(Panel.fit("[bold yellow]Hi, I'm a Panel", border_style="red"))
     # color = Color.parse("red")
-    # print(color)
-    # print(inspect(color, methods=True))
+    # rprint(color)
+    # rprint(inspect(color, methods=True))
 
     console = Console()
     console.print([1, 2, 3])
     console.print("[blue underline]Looks like a link")
     # console.print(locals())
     console.print("FOO", style="white on blue")
-    # print("FOO", style="white on blue")
+    # rprint("FOO", style="white on blue")
     console.rule("[bold red]Chapter 2")
 
     console = Console(width=20)
@@ -324,7 +339,9 @@ def test_rich():
     console.print("Hello", style="#af00ff")
     console.print("Hello", style="rgb(175,0,255)")
     console.print("DANGER!", style="red on white")
-    console.print("Danger, Will Robinson!", style="blink bold red underline on white")
+    console.print(
+        "Danger, Will Robinson!", style="blink bold red underline on white"
+    )
     console.print("foo [not bold]bar[/not bold] baz", style="bold")
     console.print("Google", style="link https://google.com")
 
@@ -338,10 +355,10 @@ def test_rich():
     style = Style(color="magenta", bgcolor="yellow", italic=True)
     style = Style.parse("italic magenta on yellow")
 
-    print("[bold red]alert![/bold red] Something happened")
-    print("[bold italic yellow on red blink]This text is impossible to read")
-    print("[bold red]Bold and red[/] not bold or red")
-    print("[bold]Bold[italic] bold and italic [/bold]italic[/italic]")
+    rprint("[bold red]alert![/bold red] Something happened")
+    rprint("[bold italic yellow on red blink]This text is impossible to read")
+    rprint("[bold red]Bold and red[/] not bold or red")
+    rprint("[bold]Bold[italic] bold and italic [/bold]italic[/italic]")
 
     # console = Console()
     # text = Text("Hello, World!")
@@ -352,23 +369,23 @@ def test_rich():
     # console.print(text.spans)
 
     # panel = Panel(Text("Hello", justify="right"))
-    # print(panel)
+    # rprint(panel)
 
     # columns = Columns("sample", equal=True, expand=True)
-    # print(columns)
+    # rprint(columns)
 
     # panel_group = Group(
     #     Panel("Hello", style="on blue"),
     #     Panel("World", style="on red"),
     # )
-    # print(Panel(panel_group))
+    # rprint(Panel(panel_group))
 
     # test = Padding("Hello", 1)
-    # print(test)
+    # rprint(test)
 
-    print(Panel("Hello, [red]World!"))
-    print(Panel.fit("Hello, [red]World!"))
-    print(Panel("Hello, [red]World!", title="Welcome", subtitle="Thank you"))
+    rprint(Panel("Hello, [red]World!"))
+    rprint(Panel.fit("Hello, [red]World!"))
+    rprint(Panel("Hello, [red]World!", title="Welcome", subtitle="Thank you"))
 
     # console.print("Hello", style="color(5)")
 
@@ -377,7 +394,7 @@ def test_rich():
         text = Text("Hello", style=f"color({color})")
         # console.print("Hello", style=f"color({color})")
         console.print(text, end=" ")
-        # print(text)
+        # rprint(text)
 
 
 def test_patch_encode(
@@ -387,9 +404,11 @@ def test_patch_encode(
     tgt_encode="utf-8",
 ):
     """Function to patch lyric encoding"""
+    # from mido.meta import meta_charset
+
     mid = mido.MidiFile(midi_path)
     for track in mid.tracks:
-        for i, msg in enumerate(track):
+        for msg in track:
             if msg.type == "lyrics":
                 msg.text = (
                     msg.bin()[3:]
@@ -397,10 +416,9 @@ def test_patch_encode(
                     .encode(tgt_encode)
                     .decode(tgt_encode)
                 )
-    mid.save(
-        out_path,
-        unicode_encode=True,
-    )
+    # with meta_charset("utf-8"):
+    mid.charset = "utf-8"
+    mid.save(out_path)
 
 
 def test_modify_lyrics(midi_path, out_path):
@@ -411,10 +429,15 @@ def test_modify_lyrics(midi_path, out_path):
             if i >= 0x100:
                 i %= 0x100
             if msg.type == "lyrics":
-                msg.text = msg.bin()[3:].decode("cp949").encode("utf-8").decode("utf-8")
+                msg.text = (
+                    msg.bin()[3:]
+                    .decode("cp949")
+                    .encode("utf-8")
+                    .decode("utf-8")
+                )
     mid.save(
         out_path,
-        unicode_encode=True,
+        encoding="utf-8",
     )
 
 
@@ -432,7 +455,7 @@ def test_insert_lyrics(midi_obj, target_track_list=None):
         if target_track_list is None or track.name in target_track_list:
             modified_track = []
             modified_num = 0
-            for j, msg in enumerate(track):
+            for msg in track:
                 modified_track.append(msg)
                 # idx = j + modified_num
                 # if idx >= 0x100:
@@ -458,11 +481,32 @@ def test_insert_lyrics(midi_obj, target_track_list=None):
     return midi_obj
 
 
-def test_show_notes():
-    """Function to show pre-defined notes"""
-    for k, v in note.NOTE.items():
-        # rprint(*pretty_note_info((k, *v)))
-        pass
+def test_custom_msg():
+    from mido.midifiles.meta import (
+        MetaSpec,
+        MetaSpec_time_signature,
+        add_meta_spec,
+    )
+    from mido import MetaMessage
+
+    class MetaSpec_rest(MetaSpec):
+        type_byte = 0xA0
+        attributes = []
+        defaults = []
+
+    class MetaSpec_measure(MetaSpec_time_signature):
+        type_byte = 0xA1
+        attributes = [
+            "index",
+            "numerator",
+            "denominator",
+        ]
+        defaults = [1, 4, 4]
+
+    add_meta_spec(MetaSpec_rest)
+    add_meta_spec(MetaSpec_measure)
+    rprint(MetaMessage("measure", time=777))
+    rprint(MetaMessage("rest", time=888))
 
 
 if __name__ == "__main__":
@@ -500,18 +544,13 @@ if __name__ == "__main__":
         },
     ]
     #
-    # PRE-DEFINED NOTES
-    #
-    # bpmlib.show_notes()
-
-    #
     # BPM ESTIMATOR vs BPM FROM MIDI
     #
     # test_bpm_estimator_librosa(samples[0]["wav"])
     # test_get_bpm_from_midi(samples[0]["mid"])
 
     # for sample in samples:
-    #     print(
+    #     rprint(
     #         f'{bpmlib.bpm_estimator_librosa(sample["wav"])[0]:.2f}'
     #         + f' {bpmlib.get_bpm_from_midi(sample["mid"]):.2f}'
     #     )
@@ -519,57 +558,73 @@ if __name__ == "__main__":
     #
     # ANALYSIS MIDI FILE
     #
-    # bpmlib.MidiAnalyzer(samples[0]["mid"]).analysis(print_bound_per_track=55)
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=40)
-    # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(print_bound_per_track=20)
-    # bpmlib.MidiAnalyzer(samples[0]["mid"]).analysis()
+    # midia.MidiAnalyzer(samples[0]["mid"]).analysis(track_bound=55)
+    # midia.MidiAnalyzer(samples[2]["mid"]).analysis(track_bound=40)
+    # midia.MidiAnalyzer(samples[3]["mid"]).analysis(track_bound=20)
+    # midia.MidiAnalyzer(samples[0]["mid"]).analysis()
 
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_note=True)
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(blind_time=True)
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(convert_1_to_0=True)
-    # bpmlib.MidiAnalyzer(samples[3]["mid"])
-    # bpmlib.MidiAnalyzer(samples[3]["mid"]).analysis(convert_1_to_0=True)
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(print_bound_per_track=15)
-    # bpmlib.MidiAnalyzer(samples[2]["mid"]).analysis(
-    #     convert_1_to_0=True, blind_note=True
-    # )
+    # midia.MidiAnalyzer(samples[2]["mid"]).analysis(blind_note=True)
+    # midia.MidiAnalyzer(samples[2]["mid"]).analysis(blind_time=True)
+    # midia.MidiAnalyzer(samples[2]["mid"]).analysis(convert_1_to_0=True)
+    # midia.MidiAnalyzer(samples[3]["mid"]).analysis(convert_1_to_0=True)
+    # midia.MidiAnalyzer(samples[2]["mid"]).analysis(track_bound=15)
+    # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
+
+    ma = midia.MidiAnalyzer(samples[2]["mid"])
+    ma.quantization()
+    ma.analysis(track_bound=None, track_list=["Melody"])
+
+    # test_custom_msg()
+
+    # rprint(mido.Message("note_on", note=0, velocity=0, time=0))
+
+    # def beat_iter(i):
+    #     beat = 4 * (3 / 4) ** ((i + 1) // 2) * (2 / 3) ** (i // 2)
+    #     return round(beat, 4)
+    # ma.analysis()
 
     # 에러 사항 출력:
     # ticks per beat 기반으로 가사와 음표가 몇분음표인지 출력
     # quantization 에러를 줄여야 함. --> 에러가 중첩되니까 --> 싱크를 맞춰야 함.
-    # --> 이전 quantization 에러를 고려해서 다음 노트의 에러를 계산해야 함. 에러가 - 면 밀렸다, + 면 땡겨졌다 이런 식으로 판단해서, 지금은 에러를 독립적으로 보기 때문에 에러가 계속 중첩 되는 상황
-    # --> 최종적으로는 quantization 된 mid 파일을 음원으로 재생하고, 노래를 같이 재생해보면서 싱크가 맞으면 제대로 했다 이런 결론을 내릴 수 있음.
+    # --> 이전 quantization 에러를 고려해서 다음 노트의 에러를 계산해야 함.
+    # 에러가 - 면 밀렸다, + 면 땡겨졌다 이런 식으로 판단해서, 지금은 에러를 독립적으로
+    # 보기 때문에 에러가 계속 중첩 되는 상황
+    # --> 최종적으로는 quantization 된 mid 파일을 음원으로 재생하고, 노래를 같이 재생해보면서
+    # 싱크가 맞으면 제대로 했다 이런 결론을 내릴 수 있음.
 
     #
     # LYRIC PATCH TEST
     #
     # midi_path = samples[3]["mid"]
     # idx = midi_path.find(".")
-    # out_path = midi_path[:idx] + "(utf-8)" + midi_path[idx:]
-    # test_patch_encode(midi_path, out_path, src_encode="cp949", tgt_encode="utf-8")
+    # out_path = midi_path[:idx] + "(utf-8)2" + midi_path[idx:]
+    # test_patch_encode(
+    #     midi_path, out_path, src_encode="cp949", tgt_encode="utf-8"
+    # )
 
-    # ma = bpmlib.MidiAnalyzer(samples[2]["mid"])
-    # ma.analysis(blind_time=True, target_track_list=["Melody"], print_bound_per_track=20)
+    # ma = midia.MidiAnalyzer(samples[2]["mid"])
+    # ma.analysis(blind_time=True, target_track_list=[
+    #             "Melody"], track_bound=20)
     # ma.partition()
-    # ma.analysis(blind_time=True, print_bound_per_track=20)
-    # ma.analysis(print_bound_per_track=20)
+    # ma.analysis(blind_time=True, track_bound=20)
+    # ma.analysis(track_bound=20)
     # ma.analysis()
 
     # modified_midi_path = "test.mid"
     # test_modify_lyrics(samples[2]["mid"], modified_midi_path)
-    # bpmlib.MidiAnalyzer(modified_midi_path).analysis(blind_time=True)
+    # midia.MidiAnalyzer(modified_midi_path).analysis(blind_time=True)
 
-    # ma = bpmlib.MidiAnalyzer(real_samples[3]["mid"])
+    # ma = midia.MidiAnalyzer(real_samples[3]["mid"])
     # ma.analysis(target_track_list=["Musicbox"], blind_time=True)
     # ma.analysis()
     # test_insert_lyrics(ma.mid, target_track_list=None)
     # modified_midi_path = "test2.mid"
-    # ma.mid.save(modified_midi_path, unicode_encode=True)
-    # ma = bpmlib.MidiAnalyzer(modified_midi_path)
+    # ma.mid.save(modified_midi_path, encoding='utf-8'=True)
+    # ma = midia.MidiAnalyzer(modified_midi_path)
     # ma.analysis(target_track_list=["Musicbox"], blind_time=True)
 
     # midi_path = "exported_midi/ba_05688_-4_a_s02_m_02(utf-8).mid"
-    # ma = bpmlib.MidiAnalyzer(midi_path)
+    # ma = midia.MidiAnalyzer(midi_path)
     # ma.analysis(blind_time=True)
 
     #
@@ -581,46 +636,47 @@ if __name__ == "__main__":
     # CREATE SAMPLE MIDI AND ANALYSIS IT
     #
     # test_create_sample_midi1("test_sample1.mid")
-    # bpmlib.midi2wav("test_sample1.mid", "test_sample1.wav", 60)
+    # midia.midi2wav("test_sample1.mid", "test_sample1.wav", 60)
     # test_create_sample_midi2("test_sample2.mid")
-    # bpmlib.midi2wav("test_sample2.mid", "test_sample2.wav", 60)
+    # midia.midi2wav("test_sample2.mid", "test_sample2.wav", 60)
     # test_create_sample_midi3("test_sample3.mid")
-    # bpmlib.midi2wav("test_sample3.mid", "test_sample3.wav", 60)
+    # midia.midi2wav("test_sample3.mid", "test_sample3.wav", 60)
     # test_create_sample_midi4("test_sample4.mid")
-    # bpmlib.midi2wav("test_sample4.mid", "test_sample4.wav", 60)
+    # midia.midi2wav("test_sample4.mid", "test_sample4.wav", 60)
     # test_create_sample_midi6("test_sample6.mid")
-    # bpmlib.midi2wav("test_sample6.mid", "test_sample6.wav", 60)
+    # midia.midi2wav("test_sample6.mid", "test_sample6.wav", 60)
     # test_create_sample_midi7("test_sample7.mid")
-    # bpmlib.midi2wav("test_sample7.mid", "test_sample7.wav", 60)
+    # midia.midi2wav("test_sample7.mid", "test_sample7.wav", 60)
     # test_create_sample_midi8("test_sample8.mid")
-    # bpmlib.midi2wav("test_sample8.mid", "test_sample8.wav", 60)
+    # midia.midi2wav("test_sample8.mid", "test_sample8.wav", 60)
 
-    # bpmlib.MidiAnalyzer("test_sample1.mid").analysis()
-    # bpmlib.MidiAnalyzer("test_sample2.mid").analysis()
-    # bpmlib.MidiAnalyzer("test_sample3.mid").analysis()
-    # bpmlib.MidiAnalyzer("test_sample4.mid").analysis()
-    # bpmlib.MidiAnalyzer("test_sample5.mid").analysis()
-    # bpmlib.MidiAnalyzer("test_sample6.mid").analysis()
-    # bpmlib.MidiAnalyzer("test_sample7.mid").analysis()
-    # bpmlib.MidiAnalyzer("test_sample8.mid").analysis()
+    # midia.MidiAnalyzer("test_sample1.mid").analysis()
+    # midia.MidiAnalyzer("test_sample2.mid").analysis()
+    # midia.MidiAnalyzer("test_sample3.mid").analysis()
+    # midia.MidiAnalyzer("test_sample4.mid").analysis()
+    # midia.MidiAnalyzer("test_sample5.mid").analysis()
+    # midia.MidiAnalyzer("test_sample6.mid").analysis()
+    # midia.MidiAnalyzer("test_sample7.mid").analysis()
+    # midia.MidiAnalyzer("test_sample8.mid").analysis()
 
     #
     # GET STATISTICS of ESTIMATED CORRECTED BPM ERROR
     #
+    # import pathlib
     # sample_num = 1
     # data_path = pathlib.Path("dataset/SINGER_16")
     # bpmlib.statistics_estimated_bpm_error(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path, sample_num=sample_num)
-    # print()
+    # rprint()
     # data_path = pathlib.Path("dataset/가창자_s02")
     # bpmlib.statistics_estimated_bpm_error(data_path)
 
     # data_path = pathlib.Path("d:/dataset/177.다음색 가이드보컬 데이터")
-    # print(data_path)
+    # rprint(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path)
-    # print()
+    # rprint()
     # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
-    # print(data_path)
+    # rprint(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path)
     #
     # Output:

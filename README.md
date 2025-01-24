@@ -5,6 +5,5 @@
 - Python packages
 
     ```shell
-    $ pip install librosa pydub rich pretty_midi
-    $ pip install git+https://github.com/ccss17/mido
+    $ pip install mido librosa pydub rich pretty_midi
     ```
