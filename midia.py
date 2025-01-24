@@ -53,10 +53,16 @@ def tick2beat(tick, ppqn):
 
 def beat2tick(beat, ppqn):
     """tick2beat"""
-    return beat * ppqn
+    return int(beat * ppqn)
 
 
-def midi2wav(midi_path, wav_path, bpm):
+def midfile2wav(midi_path, wav_path, bpm):
+    """midfile2wav(midi_path, wav_path, bpm)"""
+    mid = MidiFile(midi_path)
+    midi2wav(mid, wav_path, bpm)
+
+
+def midi2wav(mid_obj, wav_path, bpm):
     """Function to convert midi to wav
     ref: https://gist.github.com/jiaaro/339df443b005e12d6c2a"""
 
@@ -66,14 +72,13 @@ def midi2wav(midi_path, wav_path, bpm):
         """
         return (2.0 ** ((note - 69) / 12.0)) * concert_A
 
-    mid = MidiFile(midi_path)
-    output = AudioSegment.silent(mid.length * 1000.0)
+    output = AudioSegment.silent(mid_obj.length * 1000.0)
 
     def ticks_to_ms(ticks):
-        tick_ms = (60000.0 / bpm) / mid.ticks_per_beat
+        tick_ms = (60000.0 / bpm) / mid_obj.ticks_per_beat
         return ticks * tick_ms
 
-    for track in mid.tracks:
+    for track in mid_obj.tracks:
         # position of rendering in ms
         current_pos = 0.0
         current_notes = defaultdict(dict)
@@ -307,6 +312,13 @@ class MidiTrackAnalyzer:
         가수가 잘못 불러서 다른 박이 삐져나온 건지, 판단해야 하기 때문. 이를 위하여 이 박이 0.125박에
         가까운지, 0박에 가까운지 확률을 계산할 수 있어야 하고, 에러를 최소화할 수 있는 방향으로
         박을 결정해야 함.
+
+
+        --> 알고리즘을 구현 했는데, 실제 MIDI 를 음원으로 합성하니까
+        rest 라는 메시지가 음으로 합성되지 않는다. 근데 이건 당연한거고, custom 메시지이므로.
+        음들이 quantization 된 게 음원을 합성하는 관점에서는 너무 과하게 분할된 것이다.
+        그래서 quantization 을 한 이후에 실제로 음원을 합성하는 용도로,
+        사운드 유닛들을 최대한 다시 합쳐주어야 한다.
         """
 
         modified_track = []
@@ -647,7 +659,7 @@ class MidiMessageAnalyzer_time_signature(MidiMessageAnalyzer):
             body=f"{self.msg.numerator}/{self.msg.denominator}",
             blind_time=blind_time,
         )
-        return result, self.msg.numerator, self.msg.denominator
+        return result, (self.msg.numerator, self.msg.denominator)
 
 
 class MidiMessageAnalyzer_measure(MidiMessageAnalyzer):

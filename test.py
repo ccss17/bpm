@@ -572,7 +572,10 @@ if __name__ == "__main__":
 
     ma = midia.MidiAnalyzer(samples[2]["mid"])
     ma.quantization()
-    ma.analysis(track_bound=None, track_list=["Melody"])
+    ma.analysis(track_bound=None, track_list=None)
+    # ma.analysis(track_bound=None, track_list=["Melody"])
+    ma.mid.save("test_q_midi.mid")
+    # midia.midi2wav(ma.mid, "test.wav", 62)
 
     # test_custom_msg()
 
