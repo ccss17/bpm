@@ -7,10 +7,7 @@ import string
 import pretty_midi
 
 import mido as md
-from mido.midifiles.meta import (
-    MetaSpec,
-    add_meta_spec,
-)
+from mido.midifiles.meta import MetaSpec_time_signature, add_meta_spec
 from mido import MidiFile, Message, MetaMessage
 
 from pydub import AudioSegment
@@ -18,7 +15,6 @@ from pydub.generators import Sine
 from rich import print as rprint
 from rich.console import Console
 from rich.panel import Panel
-from rich.rule import Rule
 
 from note import (
     Note,
@@ -27,22 +23,22 @@ from note import (
     DEFAULT_TEMPO,
     DEFAULT_TIME_SIGNATURE,
     DEFAULT_PPQN,
+    DEFAULT_MEASURE_SPACE,
 )
 
 
-class MetaSpec_rest(MetaSpec):
-    type_byte = 0xA0
-    attributes = []
-    defaults = []
-
-
-class MetaSpec_measure(MetaSpec):
+class MetaSpec_measure(MetaSpec_time_signature):
     type_byte = 0xA1
-    attributes = ["index"]
-    defaults = [1]
+    attributes = [
+        "index",
+        "numerator",
+        "denominator",
+        "clocks_per_click",
+        "notated_32nd_notes_per_beat",
+    ]
+    defaults = [1, 4, 4, 24, 8]
 
 
-add_meta_spec(MetaSpec_rest)
 add_meta_spec(MetaSpec_measure)
 
 
@@ -54,12 +50,6 @@ def tick2beat(tick, ppqn):
 def beat2tick(beat, ppqn):
     """tick2beat"""
     return int(beat * ppqn)
-
-
-def midfile2wav(midi_path, wav_path, bpm):
-    """midfile2wav(midi_path, wav_path, bpm)"""
-    mid = MidiFile(midi_path)
-    midi2wav(mid, wav_path, bpm)
 
 
 def midi2wav(mid_obj, wav_path, bpm):
@@ -102,6 +92,12 @@ def midi2wav(mid_obj, wav_path, bpm):
     output.export(wav_path, format="wav")
 
 
+def midfile2wav(midi_path, wav_path, bpm):
+    """midfile2wav(midi_path, wav_path, bpm)"""
+    mid = MidiFile(midi_path)
+    midi2wav(mid, wav_path, bpm)
+
+
 class MidiAnalyzer:
     """Class for analysis midi file"""
 
@@ -114,19 +110,28 @@ class MidiAnalyzer:
         sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
         self.mid = MidiFile(midi_path)
         self.ppqn = self.mid.ticks_per_beat
+        self.convert_1_to_0 = convert_1_to_0
 
-        if self.mid.type == 1 and convert_1_to_0:
+        if self.mid.type == 1 and self.convert_1_to_0:
             self.mid.tracks = [md.merge_tracks(self.mid.tracks)]
 
         self.track_analyzers = [
-            MidiTrackAnalyzer(track, self.ppqn, encoding=encoding)
+            MidiTrackAnalyzer(
+                track,
+                self.ppqn,
+                encoding=encoding,
+                convert_1_to_0=convert_1_to_0,
+            )
             for track in self.mid.tracks
         ]
 
-    def quantization(self):
+    def quantization(self, error_forwarding=True, approximate_32nd_note=True):
         """quantization"""
-        for track_analyzer in self.track_analyzers:
-            track_analyzer.quantization()
+        for i, track_analyzer in enumerate(self.track_analyzers):
+            self.mid.tracks[i] = track_analyzer.quantization(
+                error_forwarding=error_forwarding,
+                approximate_32nd_note=approximate_32nd_note,
+            )
 
     def analysis(
         self,
@@ -195,11 +200,12 @@ class MidiAnalyzer:
 class MidiTrackAnalyzer:
     """Class for analysis midi track"""
 
-    def __init__(self, track, ppqn, encoding="utf-8"):
+    def __init__(self, track, ppqn, encoding="utf-8", convert_1_to_0=False):
         self.track = track
         self.name = track.name
         self.ppqn = ppqn
         self.encoding = encoding
+        self.convert_1_to_0 = convert_1_to_0
         self._init_values()
 
     def _init_values(self):
@@ -210,7 +216,8 @@ class MidiTrackAnalyzer:
     def _get_quantized_note(self, msg, beat):
         result = []
         if msg.type == "note_on":
-            result.append(MetaMessage("rest", time=beat2tick(beat, self.ppqn)))
+            # result.append(MetaMessage("rest", time=beat2tick(beat, self.ppqn)))
+            result.append(Message("note_off", time=beat2tick(beat, self.ppqn)))
         elif msg.type == "note_off":
             q_msg = msg.copy()
             q_msg.time = beat2tick(beat, self.ppqn)
@@ -221,7 +228,7 @@ class MidiTrackAnalyzer:
             result.append(_msg_on)
         return result
 
-    def _quantization_one(self, msg, space):
+    def _quantization(self, msg, space):
         beat_idx = 0
         note_list = list(Note)
         q_time = None
@@ -252,169 +259,52 @@ class MidiTrackAnalyzer:
             None,
         )
 
-    def _quantization(self, msg):
-        quantized_note = []
-        beat_idx = 0
-        note_list = list(Note)
-        while beat_idx < len(Note):
-            beat = tick2beat(msg.time, self.ppqn)
-            q_beat = note_list[beat_idx].value.beat
-            if beat > q_beat:
-                q_msg = msg.copy()
-                q_msg.time = beat2tick(q_beat, self.ppqn)
-                quantized_note += self._get_quantized_note(msg, q_beat)
-                msg.time -= beat2tick(q_beat, self.ppqn)
-            elif beat == q_beat:
-                break
-            else:
-                beat_idx += 2  # 반음표를 고려하지 않음.
-
-        quantized_note.append(msg)
-        return quantized_note
-
-    def quantization(self):
-        """quantization
-        박자가 4(온음표) 보다 크다 → 4보다 작아질 때 까지 4박을 독립시킨다.
-        박자가 4보다 작다.
-            박자가 2(2분음표)보다 크다 	→ 2박을 독립시킨다.
-            박자가 1(4분음표)보다 크다 → 1박을 독립시킨다.
-            박자가 0.5(8분음표)보다 크다 → 0.5박을 독립시킨다.
-            박자가 0.25(16분음표)보다 크다 → 0.25박을 독립시킨다.
-            박자가 0.125(32분음표)보다 크다 → 0.125박을 독립시킨다.
-        박이 32분음표보다 작으면?
-
-        기본적으로, 4/4박자표에서 정의된 노래라면, 4박자씩 마디를 채워나가게 된다.
-        따라서 이 노래를 부른 음원을 분석하면 노트와 가사의 박자를 계속 가져와서 4박자 마디를
-        채워나갈 수 있다. 만약 4박자 마디가 3.9 박이 채워졌는데, 그 다음 노트가 1.2박이면
-        그 노트의 0.1 박을 가져와서 4박자 마디 4.0박을 채우게 되고, 그 다음 노트의 1.1박을
-        그 다음 마디 4박에 채워야지. 근데 만약 4박자 마디가 3.99 박이 채워져서 0.01박을
-        채워야 한다면, 32분음표(0.125박)보다 작은 박을 필요로 하는 건데, 최소단위를 32분음표라고
-        가정했으므로 이건 존재하지 않는 박(0.01박)인 것이다.
-
-        32분음표보다 작으면 존재하지 않는 박이고, 존재하지 않는 박이면 존재하지 않는다는 이유로
-        삭제해야 함. 그런데 삭제하는 것까지는 좋은데, 이런 식으로 1/32음표보다 작은 박들을 모두
-        삭제를 했다가는 에러가 누적되면서 악보와 노래의 싱크가 틀어지게 된다.
-        따라서 삭제하되, 이 1/32음표보다 작은 박을 이전 노트나 다음 음표의 박으로 병합해준다.
-
-        그러니까 기본적으로 32분음표(0.125박) 보다 작은 박은 존재하지 않는다고 가정하는 것.
-        따라서 만약 0.125박 보다 작은 박이 발견되면
-        이것은 가수가 정박에 부르지 않았기에 발생한 잔차로 해석.
-        이 잔차가 32분음표보다 작기 때문에 실제로 존재하는 박이 아니며, 그러므로 이전 박이나 다음 박으로
-        병합시키거나, 아예 삭제하고 이전 박이나 다음 박을 보충해주어야 함.
-
-        박이 32분음표보다 작은 경우를 2가지로 해석할 수 있다.
-        양의 경우: 음표보다 32분음표보다 작은 경우. ex) 노트의 박이 0.01 인 경우.
-        음의 경우: 4박자 마디가 다 채워지도록 필요로하는 박이 32분음표 보다 작은 경우
-        ex) 4박자 마디가 3.99박이 채워진 경우.
-
-        0박의 존재를 가정해야 함. 1/32음표보다 작은 박이 발견될 경우 그 박이 실제로는 0.125박
-        인데 가수가 잘못 불러서 0.125박보다 작아졌는지, 그 박이 실제로는 0박(즉, 없는 박)인데
-        가수가 잘못 불러서 다른 박이 삐져나온 건지, 판단해야 하기 때문. 이를 위하여 이 박이 0.125박에
-        가까운지, 0박에 가까운지 확률을 계산할 수 있어야 하고, 에러를 최소화할 수 있는 방향으로
-        박을 결정해야 함.
-
-
-        --> 알고리즘을 구현 했는데, 실제 MIDI 를 음원으로 합성하니까
-        rest 라는 메시지가 음으로 합성되지 않는다. 근데 이건 당연한거고, custom 메시지이므로.
-        음들이 quantization 된 게 음원을 합성하는 관점에서는 너무 과하게 분할된 것이다.
-        그래서 quantization 을 한 이후에 실제로 음원을 합성하는 용도로,
-        사운드 유닛들을 최대한 다시 합쳐주어야 한다.
-        """
+    def quantization(self, error_forwarding=True, approximate_32nd_note=True):
+        """quantization"""
 
         modified_track = []
-        note_queue = {}
-
-        # for msg in self.track:
-        #     if msg.type == "note_on":
-        #         mma = MidiMessageAnalyzer_note_on(
-        #             msg=msg, note_queue=note_queue
-        #         )
-        #         mma.alloc_note(msg.note)
-        #         modified_track += self._quantization(msg)
-        #     elif msg.type == "note_off":
-        #         mma = MidiMessageAnalyzer_note_off(
-        #             msg=msg, note_queue=note_queue
-        #         )
-        #         mma.free_note(msg.note)
-        #         modified_track += self._quantization(msg)
-        #     elif msg.type == "lyrics":
-        #         modified_track.append(msg)
-        #     else:
-        #         modified_track.append(msg)
-
         i = 0
-        space = 4
+        space = DEFAULT_MEASURE_SPACE
         error = 0
         q_note, q_time = None, None
         while i < len(self.track):
-            if self.track[i].type == "note_on":
-                if error:
+            if self.track[i].type in ["note_on", "note_off"]:
+                if error_forwarding and error:
                     self.track[i].time += error
                     error = 0
-
-                # mma = MidiMessageAnalyzer_note_on(
-                #     msg=self.track[i], note_queue=note_queue
-                # )
-                # mma.alloc_note(self.track[i].note)
-                # q_note, q_time = self._quantization_one(self.track[i], space)
-                # if q_time is not None:
-                #     space -= tick2beat(q_time, self.ppqn)
-                # modified_track.append(self.track[i])
-                q_note, q_time = self._quantization_one(self.track[i], space)
-            elif self.track[i].type == "note_off":
-                if error:
-                    self.track[i].time += error
-                    error = 0
-                # mma = MidiMessageAnalyzer_note_off(
-                #     msg=self.track[i], note_queue=note_queue
-                # )
-                # mma.free_note(self.track[i].note)
-                q_note, q_time = self._quantization_one(self.track[i], space)
-                # if q_time is not None:
-                #     space -= tick2beat(q_time, self.ppqn)
-                # modified_track.append(self.track[i])
-            elif self.track[i].type == "lyrics":
-                modified_track.append(self.track[i])
-                i += 1
-                continue
+                q_note, q_time = self._quantization(self.track[i], space)
             else:
                 modified_track.append(self.track[i])
                 i += 1
                 continue
 
-            if q_note is not None and q_time is not None:
-                # quantized note
+            # handle quantization results
+            if q_note and q_time:  # quantized note
                 modified_track += q_note
                 space -= tick2beat(q_time, self.ppqn)
-            elif q_note is None and q_time is not None:
-                # original msg is already quantized
+            elif (
+                q_note is None and q_time
+            ):  # original msg is already quantized
                 modified_track.append(self.track[i])
                 space -= tick2beat(q_time, self.ppqn)
                 i += 1
-            elif q_note is not None and q_time is None:
-                # quantization failed
-                # (0.0625, 0] 에 포함되면 0 로 취급하고(실제 박을 더 짧은 박(0)으로 간주했으므로 그 다음 박에 + 에러를 포워딩해서 박을 보상해줌.), 에러 포워딩
-                # (0.125, 0.0625] 에 포함되면 0.125 로 취급하고(이러면 실제 박을 더 긴 박으로 간주했으므로, 그 다음 박으로 - 에러를 포워딩해서 박자를 보상해줌), 에러 포워딩
-                # modified_track.append(self.track[i])
-                beat = tick2beat(self.track[i].time, self.ppqn)
-                if beat < 0.0625:
-                    error = q_note.time - 0
-                    q_note.time = 0
-                    modified_track.append(q_note)
-                elif beat < 0.125:
-                    error = q_note.time - beat2tick(0.125, self.ppqn)
-                    q_note.time = beat2tick(0.125, self.ppqn)
-                    modified_track.append(q_note)
-                else:
-                    raise ValueError
+            elif q_note and q_time is None:
+                # quantization failed: beat in [0, 0.125)
+                if approximate_32nd_note:
+                    beat = tick2beat(self.track[i].time, self.ppqn)
+                    beat_unit = list(Note)[-1].value.beat  # 0.125
+                    if beat < beat_unit / 2:  # beat in [0, 0.0625)
+                        error = q_note.time
+                        q_note.time = 0  # approximate to beat=0
+                    elif beat < beat_unit:  # beat in [0.0625, 0.125)
+                        error = q_note.time - beat2tick(0.125, self.ppqn)
+                        # approximate to beat=0.125
+                        q_note.time = beat2tick(0.125, self.ppqn)
+                modified_track.append(q_note)
                 i += 1
-                # space -= q_time
-            # else:
-            #     modified_track.append(msg)
-            #     space -= q_time
-            if space == 0:
+
+            if space == 0:  # measure is full
                 if self.track[i].type == "note_off":
-                    # modified_track.append(MetaMessage("measure"))
                     modified_track = (
                         modified_track[:-1]
                         + [MetaMessage("measure")]
@@ -422,12 +312,12 @@ class MidiTrackAnalyzer:
                     )
                 elif self.track[i].type == "note_on":
                     modified_track.append(MetaMessage("measure"))
-                space = 4
-                # modified_track.append()
+                space = DEFAULT_MEASURE_SPACE
             elif space < 0:
                 raise ValueError
 
         self.track = modified_track
+        return self.track
 
     def print_note_num(self, note_num):
         """print_note_num"""
@@ -493,14 +383,16 @@ class MidiTrackAnalyzer:
                 ).analysis(blind_time=blind_time, blind_note=blind_note)
                 lyric += _lyric
             elif msg.type == "measure":
-                result = MidiMessageAnalyzer_measure().print()
+                result = MidiMessageAnalyzer_measure(
+                    self.time_signature
+                ).analysis()
             elif msg.type == "text" or msg.type == "track_name":
                 result = MidiMessageAnalyzer_text(
                     **msg_kwarg,
                     encoding=self.encoding,
                 ).analysis(blind_time=blind_time)
             elif msg.type == "set_tempo":
-                if not first_tempo:
+                if not first_tempo and self.convert_1_to_0:
                     self.print_note_num(note_num)
                 first_tempo = False
                 result, self.tempo = MidiMessageAnalyzer_set_tempo(
@@ -508,7 +400,8 @@ class MidiTrackAnalyzer:
                     time_signature=self.time_signature,
                 ).analysis(blind_time=blind_time)
             elif msg.type == "end_of_track":
-                self.print_note_num(note_num)
+                if self.convert_1_to_0:
+                    self.print_note_num(note_num)
                 result = MidiMessageAnalyzer_end_of_track(
                     **msg_kwarg
                 ).analysis(blind_time=blind_time)
@@ -667,18 +560,26 @@ class MidiMessageAnalyzer_measure(MidiMessageAnalyzer):
 
     idx = 1
 
-    def __init__(self):
-        pass
+    def __init__(
+        self,
+        time_signature=DEFAULT_TIME_SIGNATURE,
+    ):
+        self.time_signature = time_signature
 
     @classmethod
-    def print(cls):
+    def inc_idx(cls):
+        cls.idx += 1
+
+    def analysis(self):
         """print measure"""
         Console(width=50).rule(
-            f"[#ffffff]𝄞 measure {cls.idx}[/#ffffff]",
+            f"[#ffffff]𝄞 {self.time_signature[0]}/{self.time_signature[1]} "
+            + f"measure {self.idx}[/#ffffff]",
             style="#ffffff",
             characters="=",
         )
-        cls.idx += 1
+        self.inc_idx()
+        return None
 
 
 class MidiMessageAnalyzer_text(MidiMessageAnalyzer):
