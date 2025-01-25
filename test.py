@@ -15,7 +15,7 @@ from rich.text import Text
 
 import bpmlib
 import midia
-from note import *
+from note import *  # noqa: F403
 
 
 def test_bpm_estimator_librosa(audio_path):
@@ -435,10 +435,7 @@ def test_modify_lyrics(midi_path, out_path):
                     .encode("utf-8")
                     .decode("utf-8")
                 )
-    mid.save(
-        out_path,
-        encoding="utf-8",
-    )
+    mid.save(out_path)
 
 
 def test_insert_lyrics(midi_obj, target_track_list=None):

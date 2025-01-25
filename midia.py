@@ -28,6 +28,8 @@ from note import (
 
 
 class MetaSpec_measure(MetaSpec_time_signature):
+    """MetaSpec_measure"""
+
     type_byte = 0xA1
     attributes = [
         "index",
@@ -92,8 +94,8 @@ def midi2wav(mid_obj, wav_path, bpm):
     output.export(wav_path, format="wav")
 
 
-def midfile2wav(midi_path, wav_path, bpm):
-    """midfile2wav(midi_path, wav_path, bpm)"""
+def midifile2wav(midi_path, wav_path, bpm):
+    """midifile2wav(midi_path, wav_path, bpm)"""
     mid = MidiFile(midi_path)
     midi2wav(mid, wav_path, bpm)
 
@@ -216,7 +218,6 @@ class MidiTrackAnalyzer:
     def _get_quantized_note(self, msg, beat):
         result = []
         if msg.type == "note_on":
-            # result.append(MetaMessage("rest", time=beat2tick(beat, self.ppqn)))
             result.append(Message("note_off", time=beat2tick(beat, self.ppqn)))
         elif msg.type == "note_off":
             q_msg = msg.copy()
@@ -568,6 +569,7 @@ class MidiMessageAnalyzer_measure(MidiMessageAnalyzer):
 
     @classmethod
     def inc_idx(cls):
+        """inc_idx"""
         cls.idx += 1
 
     def analysis(self):
@@ -579,7 +581,7 @@ class MidiMessageAnalyzer_measure(MidiMessageAnalyzer):
             characters="=",
         )
         self.inc_idx()
-        return None
+        return ""
 
 
 class MidiMessageAnalyzer_text(MidiMessageAnalyzer):
@@ -664,7 +666,7 @@ class MidiMessageAnalyzer_SoundUnit(MidiMessageAnalyzer):
             except KeyError:
                 return address
 
-    def quantization_min(self, tick, as_rest=False):
+    def closest_note(self, tick, as_rest=False):
         """select minimum error"""
         if tick == 0:
             return None, None
@@ -714,12 +716,7 @@ class MidiMessageAnalyzer_note_on(MidiMessageAnalyzer_SoundUnit):
 
     def analysis(self, blind_time=False, blind_note=False):
         addr = self.alloc_note(self.msg.note)
-        # addr = self.note_queue_alloc()
-        # self.note_queue[addr] = self.msg.note
-
-        error, quantized_note = self.quantization_min(
-            self.msg.time, as_rest=True
-        )
+        error, quantized_note = self.closest_note(self.msg.time, as_rest=True)
         info_quantization = ""
         quantization_error = 0
         if error is not None:
@@ -756,7 +753,7 @@ class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
         # del self.note_queue[addr]
         info_note_off = f"[{color}]└{self.note_info(self.msg.note)}┘[/{color}]"
 
-        error, quantized_note = self.quantization_min(
+        error, quantized_note = self.closest_note(
             self.msg.time, as_rest=True if addr is None else False
         )
         info_quantization = ""
@@ -783,9 +780,7 @@ class MidiMessageAnalyzer_rest(MidiMessageAnalyzer_SoundUnit):
     """MidiMessageAnalyzer_rest"""
 
     def analysis(self, blind_time=False, blind_note=False):
-        error, quantized_note = self.quantization_min(
-            self.msg.time, as_rest=True
-        )
+        error, quantized_note = self.closest_note(self.msg.time, as_rest=True)
         info_quantization = ""
         quantization_error = 0
         if error is not None:
@@ -868,7 +863,7 @@ class MidiMessageAnalyzer_lyrics(
             f"{lyric:^7}" if self.is_alnumpunc(lyric) else f"{lyric:^6}"
         )
 
-        error, quantized_note = self.quantization_min(self.msg.time)
+        error, quantized_note = self.closest_note(self.msg.time)
         info_quantization = ""
         quantization_error = 0
         if error is not None:
