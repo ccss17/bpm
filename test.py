@@ -15,7 +15,6 @@ from rich.text import Text
 
 import bpmlib
 import midia
-from note import *  # noqa: F403
 
 
 def test_bpm_estimator_librosa(audio_path):
@@ -570,8 +569,8 @@ if __name__ == "__main__":
     ma = midia.MidiAnalyzer(samples[2]["mid"])
     # ma.quantization(error_forwarding=False)
     ma.quantization()
-    # ma.analysis(track_bound=None, track_list=None)
-    ma.analysis(track_bound=30, track_list=["Melody"])
+    ma.analysis(track_bound=None, track_list=None)
+    # ma.analysis(track_bound=30, track_list=["Melody"])
     # mid_path = "test_q_ff_midi.mid"
     # ma.mid.save(mid_path)
     # ma = midia.MidiAnalyzer(mid_path)

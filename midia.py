@@ -695,7 +695,10 @@ class MidiMessageAnalyzer_SoundUnit(MidiMessageAnalyzer):
             if error == 0:
                 err_msg = ""
             else:
-                err_msg = f"[red]-{float(real_beat):.3}[/red][#ff0000]={error}[/#ff0000]"
+                err_msg = (
+                    f"[red]-{float(real_beat):.3}[/red]"
+                    + f"[#ff0000]={error}[/#ff0000]"
+                )
             return (
                 f"[{quantization_color}]"
                 + f"{quantized_note.symbol:2}{quantized_note.name_short}"
@@ -752,9 +755,7 @@ class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
 
     def analysis(self, blind_time=False, blind_note=False):
         addr = self.free_note(self.msg.note)
-        # color = "white on red" if addr is None else f"color({COLOR[addr]})"
         color = None if addr is None else f"color({COLOR[addr]})"
-        # info_note_off = f"[{color}]└{self.note_info(self.msg.note)}┘[/{color}]"
 
         error, quantized_note = self.closest_note(
             self.msg.time, as_rest=True if addr is None else False
