@@ -100,6 +100,36 @@ def midifile2wav(midi_path, wav_path, bpm):
     midi2wav(mid, wav_path, bpm)
 
 
+def compare_track(track1, track2):
+    """compare_track"""
+    i = 0
+    j = 0
+    while i < len(track1) or j < len(track2):
+        if (
+            i < len(track1)
+            and track1[i].type == "note_off"
+            and track1[i].note == 0
+        ):
+            rprint(track1[i])
+            i += 1
+            continue
+        if (
+            j < len(track2)
+            and track2[j].type == "note_off"
+            and track2[j].note == 0
+        ):
+            rprint(track1[j])
+            j += 1
+            continue
+        if i < len(track1):
+            rprint(track1[i])
+            i += 1
+        if j < len(track1):
+            rprint(track2[j])
+            j += 1
+        print()
+
+
 class MidiAnalyzer:
     """Class for analysis midi file"""
 
@@ -127,12 +157,22 @@ class MidiAnalyzer:
             for track in self.mid.tracks
         ]
 
+    def quantization2(self):
+        """quantization"""
+        for i, track_analyzer in enumerate(self.track_analyzers):
+            self.mid.tracks[i] = track_analyzer.quantization2()
+
     def quantization(self, error_forwarding=True):
         """quantization"""
         for i, track_analyzer in enumerate(self.track_analyzers):
             self.mid.tracks[i] = track_analyzer.quantization(
                 error_forwarding=error_forwarding
             )
+
+    def merge(self):
+        """merge"""
+        for i, track_analyzer in enumerate(self.track_analyzers):
+            self.mid.tracks[i] = track_analyzer.merge()
 
     def analysis(
         self,
@@ -237,7 +277,7 @@ class MidiTrackAnalyzer:
             q_beat = note_list[beat_idx].value.beat
             q_time = beat2tick(q_beat, self.ppqn)
             if q_beat > space:
-                beat_idx += 2
+                beat_idx += 1
                 continue
             if beat > q_beat:
                 q_msg = msg.copy()
@@ -253,11 +293,57 @@ class MidiTrackAnalyzer:
                     q_time,
                 )
             elif beat < q_beat:
-                beat_idx += 2
+                beat_idx += 1
         return (
             msg,  # quantization failed
             None,
         )
+
+    def merge(self):
+        """merge"""
+
+        merged_track = []
+        i = 0
+        prev_note_off = None
+        prev_note_on = None
+        while i < len(self.track):
+            match self.track[i].type:
+                case "note_off":
+                    if prev_note_off is None:
+                        prev_note_off = self.track[i]
+                    else:
+                        if prev_note_off.note == self.track[i].note:
+                            prev_note_off.time += self.track[i].time
+                        else:
+                            merged_track.append(prev_note_off)
+                            prev_note_off = self.track[i]
+                case "note_on":
+                    prev_note_on = self.track[i].copy()
+                    if prev_note_off is None:
+                        merged_track.append(self.track[i])
+                    else:
+                        if prev_note_off.note != self.track[i].note:
+                            merged_track.append(prev_note_off)
+                            merged_track.append(self.track[i])
+                            prev_note_off = None
+                case "lyrics":
+                    if prev_note_off is not None:
+                        merged_track.append(prev_note_off)
+                        merged_track.append(prev_note_on)
+                        prev_note_off = None
+                    merged_track.append(self.track[i])
+                case "end_of_track":
+                    if prev_note_off is not None:
+                        merged_track.append(prev_note_off)
+                    merged_track.append(self.track[i])
+                case "measure":
+                    pass
+                case _:
+                    merged_track.append(self.track[i])
+            i += 1
+
+        self.track = merged_track
+        return self.track
 
     def quantization(self, error_forwarding=True):
         """quantization"""
@@ -316,7 +402,52 @@ class MidiTrackAnalyzer:
             elif space < 0:
                 raise ValueError
 
+        rprint(f"[white on red]에러: {error}[/white on red]")
         self.track = modified_track
+        return self.track
+
+    def _quantization2(self, msg):
+        q_time = None
+        total_q_time = 0
+        error = 0
+        for note_item in list(Note):
+            beat = tick2beat(msg.time, self.ppqn)
+            q_beat = note_item.value.beat
+            q_time = beat2tick(q_beat, self.ppqn)
+            if beat > q_beat:
+                msg.time -= q_time
+                total_q_time += q_time
+            elif beat == q_beat:  # msg is quantized
+                msg.time += total_q_time
+                return msg, error
+
+        # now, beat in [0, 0.125)
+        beat = tick2beat(msg.time, self.ppqn)
+        beat_unit = list(Note)[-1].value.beat  # 0.125
+        if beat < beat_unit / 2:  # beat in [0, 0.125/2)
+            error = msg.time
+            msg.time = 0  # approximate to beat=0
+        elif beat < beat_unit:  # beat in [0.125/2, 0.125)
+            error = msg.time - beat2tick(beat_unit, self.ppqn)
+            # approximate to beat=0.125
+            msg.time = beat2tick(beat_unit, self.ppqn)
+        msg.time += total_q_time
+        return msg, error
+
+    def quantization2(self):
+        """quantization2"""
+
+        error = 0
+        for msg in self.track:
+            if msg.type in ["note_on", "note_off", "lyrics"]:
+                if error:
+                    msg.time += error
+                    error = 0
+                msg, error = self._quantization2(msg)
+
+        if error:
+            self.track[-1].time += error
+            error = 0
         return self.track
 
     def print_note_num(self, note_num):
@@ -337,8 +468,8 @@ class MidiTrackAnalyzer:
     ):
         """analysis track"""
         self._init_values()
-        quantization_error = 0
-        quantization_num = 0
+        quantization_error = 0.0
+        quantization_num = 1e-6
         note_address = 0
         q_error = 0
         note_num = 0
@@ -433,16 +564,14 @@ class MidiTrackAnalyzer:
                 quantization_num += 1 if q_error else 0
                 note_num += 1
 
-        q_error_mean = 0
         rprint(f"Track lyric encode: {self.encoding}")
         rprint(f"Track total time: {self.length}")
-        if quantization_num != 0:
-            q_error_mean = quantization_error / quantization_num
-            rprint(
-                "Track total quantization error/mean: "
-                + f"{quantization_error:.5}/"
-                + f"{q_error_mean: .5}"
-            )
+        q_error_mean = quantization_error / quantization_num
+        rprint(
+            "Track total quantization error/mean: "
+            + f"{quantization_error:.5}/"
+            + f"{q_error_mean: .5}"
+        )
         if not blind_lyric:
             print(f'LYRIC: "{lyric}"')
         return quantization_error, q_error_mean
@@ -755,7 +884,7 @@ class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
 
     def analysis(self, blind_time=False, blind_note=False):
         addr = self.free_note(self.msg.note)
-        color = None if addr is None else f"color({COLOR[addr]})"
+        color = None if addr is None else f"color({COLOR[addr % len(COLOR)]})"
 
         error, quantized_note = self.closest_note(
             self.msg.time, as_rest=True if addr is None else False
@@ -864,7 +993,7 @@ class MidiMessageAnalyzer_lyrics(
             border_color = "white on red"
         else:
             lyric_style = "#98ff29"
-            border_color = f"color({COLOR[self.note_address]})"
+            border_color = f"color({COLOR[self.note_address % len(COLOR)]})"
 
         lyric = self.encoded_text.decode(self.encoding).strip()
         border = f"[{border_color}]│[/{border_color}]"

@@ -568,15 +568,22 @@ if __name__ == "__main__":
 
     ma = midia.MidiAnalyzer(samples[2]["mid"])
     # ma.quantization(error_forwarding=False)
-    ma.quantization()
+    ma.quantization2()
+    # ma.quantization()
+    # ma.merge()
     ma.analysis(track_bound=None, track_list=None)
     # ma.analysis(track_bound=30, track_list=["Melody"])
-    # mid_path = "test_q_ff_midi.mid"
+    # mid_path = "test_q2_midi.mid"
+    # mid_path = "test_q_ff_merged_midi.mid"
     # ma.mid.save(mid_path)
     # ma = midia.MidiAnalyzer(mid_path)
     # ma.analysis(track_bound=None, track_list=None)
     # print(list(Note)[-1].value.beat, list(Note)[-1].value.beat / 2)
     # midia.midi2wav(ma.mid, "test.wav", 62)
+
+    # t1 = mido.MidiFile(mid_path).tracks[1]
+    # t2 = mido.MidiFile(samples[2]["mid"]).tracks[1]
+    # midia.compare_track(t1, t2)
 
     # test_custom_msg()
 
