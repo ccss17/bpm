@@ -19,6 +19,8 @@ from rich.panel import Panel
 from note import (
     Note,
     Rest,
+    Note_all,
+    Rest_all,
     COLOR,
     DEFAULT_TEMPO,
     DEFAULT_TIME_SIGNATURE,
@@ -157,22 +159,10 @@ class MidiAnalyzer:
             for track in self.mid.tracks
         ]
 
-    def quantization2(self):
+    def quantization(self):
         """quantization"""
         for i, track_analyzer in enumerate(self.track_analyzers):
-            self.mid.tracks[i] = track_analyzer.quantization2()
-
-    def quantization(self, error_forwarding=True):
-        """quantization"""
-        for i, track_analyzer in enumerate(self.track_analyzers):
-            self.mid.tracks[i] = track_analyzer.quantization(
-                error_forwarding=error_forwarding
-            )
-
-    def merge(self):
-        """merge"""
-        for i, track_analyzer in enumerate(self.track_analyzers):
-            self.mid.tracks[i] = track_analyzer.merge()
+            self.mid.tracks[i] = track_analyzer.quantization()
 
     def analysis(
         self,
@@ -268,145 +258,7 @@ class MidiTrackAnalyzer:
             result.append(_msg_on)
         return result
 
-    def _quantization(self, msg, space):
-        beat_idx = 0
-        note_list = list(Note)
-        q_time = None
-        while beat_idx < len(Note):
-            beat = tick2beat(msg.time, self.ppqn)
-            q_beat = note_list[beat_idx].value.beat
-            q_time = beat2tick(q_beat, self.ppqn)
-            if q_beat > space:
-                beat_idx += 1
-                continue
-            if beat > q_beat:
-                q_msg = msg.copy()
-                q_msg.time = q_time
-                msg.time -= q_time
-                return (
-                    self._get_quantized_note(msg, q_beat),  # quantized note
-                    q_time,  # quantized time
-                )
-            elif beat == q_beat:
-                return (
-                    None,  # original msg is already quantized
-                    q_time,
-                )
-            elif beat < q_beat:
-                beat_idx += 1
-        return (
-            msg,  # quantization failed
-            None,
-        )
-
-    def merge(self):
-        """merge"""
-
-        merged_track = []
-        i = 0
-        prev_note_off = None
-        prev_note_on = None
-        while i < len(self.track):
-            match self.track[i].type:
-                case "note_off":
-                    if prev_note_off is None:
-                        prev_note_off = self.track[i]
-                    else:
-                        if prev_note_off.note == self.track[i].note:
-                            prev_note_off.time += self.track[i].time
-                        else:
-                            merged_track.append(prev_note_off)
-                            prev_note_off = self.track[i]
-                case "note_on":
-                    prev_note_on = self.track[i].copy()
-                    if prev_note_off is None:
-                        merged_track.append(self.track[i])
-                    else:
-                        if prev_note_off.note != self.track[i].note:
-                            merged_track.append(prev_note_off)
-                            merged_track.append(self.track[i])
-                            prev_note_off = None
-                case "lyrics":
-                    if prev_note_off is not None:
-                        merged_track.append(prev_note_off)
-                        merged_track.append(prev_note_on)
-                        prev_note_off = None
-                    merged_track.append(self.track[i])
-                case "end_of_track":
-                    if prev_note_off is not None:
-                        merged_track.append(prev_note_off)
-                    merged_track.append(self.track[i])
-                case "measure":
-                    pass
-                case _:
-                    merged_track.append(self.track[i])
-            i += 1
-
-        self.track = merged_track
-        return self.track
-
-    def quantization(self, error_forwarding=True):
-        """quantization"""
-
-        modified_track = []
-        i = 0
-        space = DEFAULT_MEASURE_SPACE
-        error = 0
-        q_note, q_time = None, None
-        while i < len(self.track):
-            if self.track[i].type in ["note_on", "note_off"]:
-                if error_forwarding and error:
-                    self.track[i].time += error
-                    error = 0
-                q_note, q_time = self._quantization(self.track[i], space)
-            else:
-                modified_track.append(self.track[i])
-                i += 1
-                continue
-
-            # handle quantization results
-            if q_note and q_time:  # quantized note
-                modified_track += q_note
-                space -= tick2beat(q_time, self.ppqn)
-            elif (
-                q_note is None and q_time
-            ):  # original msg is already quantized
-                modified_track.append(self.track[i])
-                space -= tick2beat(q_time, self.ppqn)
-                i += 1
-            elif q_note and q_time is None:
-                # quantization failed: beat in [0, 0.125)
-                beat = tick2beat(self.track[i].time, self.ppqn)
-                beat_unit = list(Note)[-1].value.beat  # 0.125
-                if beat < beat_unit / 2:  # beat in [0, 0.0625)
-                    error = q_note.time
-                    q_note.time = 0  # approximate to beat=0
-                elif beat < beat_unit:  # beat in [0.0625, 0.125)
-                    error = q_note.time - beat2tick(0.125, self.ppqn)
-                    # approximate to beat=0.125
-                    q_note.time = beat2tick(0.125, self.ppqn)
-                modified_track.append(q_note)
-                space -= tick2beat(q_note.time, self.ppqn)
-                i += 1
-
-            if space == 0:  # measure is full
-                if self.track[i].type == "note_off":
-                    modified_track = (
-                        modified_track[:-1]
-                        + [MetaMessage("measure")]
-                        + [modified_track[-1]]
-                    )
-                elif self.track[i].type == "note_on":
-                    modified_track.append(MetaMessage("measure"))
-                space = DEFAULT_MEASURE_SPACE
-            elif space < 0:
-                raise ValueError
-
-        rprint(f"[white on red]에러: {error}[/white on red]")
-        self.track = modified_track
-        return self.track
-
-    def _quantization2(self, msg):
+    def _quantization(self, msg):
         q_time = None
         total_q_time = 0
         error = 0
@@ -434,7 +286,7 @@ class MidiTrackAnalyzer:
         msg.time += total_q_time
         return msg, error
 
-    def quantization2(self):
+    def quantization(self):
         """quantization2"""
 
         error = 0
@@ -443,7 +295,7 @@ class MidiTrackAnalyzer:
                 if error:
                     msg.time += error
                     error = 0
-                msg, error = self._quantization2(msg)
+                msg, error = self._quantization(msg)
 
         if error:
             self.track[-1].time += error
@@ -478,9 +330,11 @@ class MidiTrackAnalyzer:
         if track_bound is None:
             track_bound = float("inf")
         lyric = ""
+        total_time = 0
         for i, msg in enumerate(self.track):
             if i > track_bound:
                 break
+            total_time += msg.time
             self.length += md.tick2second(
                 msg.time,
                 ticks_per_beat=self.ppqn,
@@ -565,7 +419,7 @@ class MidiTrackAnalyzer:
                 note_num += 1
 
         rprint(f"Track lyric encode: {self.encoding}")
-        rprint(f"Track total time: {self.length}")
+        rprint(f"Track total time: {self.length}/{total_time}")
         q_error_mean = quantization_error / quantization_num
         rprint(
             "Track total quantization error/mean: "
@@ -806,7 +660,7 @@ class MidiMessageAnalyzer_SoundUnit(MidiMessageAnalyzer):
         beat = tick2beat(tick, self.ppqn)
         min_error = float("inf")
         quantized_note = None
-        note_enum = Rest if as_rest else Note
+        note_enum = Rest_all if as_rest else Note_all
         for note in note_enum:
             error = note.value.beat - beat
             if abs(error) < min_error:

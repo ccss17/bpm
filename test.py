@@ -567,10 +567,7 @@ if __name__ == "__main__":
     # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
 
     ma = midia.MidiAnalyzer(samples[2]["mid"])
-    # ma.quantization(error_forwarding=False)
-    ma.quantization2()
-    # ma.quantization()
-    # ma.merge()
+    ma.quantization()
     ma.analysis(track_bound=None, track_list=None)
     # ma.analysis(track_bound=30, track_list=["Melody"])
     # mid_path = "test_q2_midi.mid"
