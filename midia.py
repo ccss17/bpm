@@ -171,6 +171,7 @@ class MidiAnalyzer:
         blind_time=False,
         blind_lyric=True,
         track_list=None,
+        blind_note_info=False,
     ):
         """method to analysis"""
 
@@ -209,6 +210,7 @@ class MidiAnalyzer:
                         blind_note=blind_note,
                         blind_time=blind_time,
                         blind_lyric=blind_lyric,
+                        blind_note_info=blind_note_info,
                     )
                 )
                 quantization_error += _quantization_error
@@ -317,6 +319,7 @@ class MidiTrackAnalyzer:
         blind_note=False,
         blind_time=False,
         blind_lyric=True,
+        blind_note_info=False,
     ):
         """analysis track"""
         self._init_values()
@@ -353,24 +356,38 @@ class MidiTrackAnalyzer:
                         MidiMessageAnalyzer_note_on(
                             **msg_kwarg, note_queue=note_queue
                         ).analysis(
-                            blind_time=blind_time, blind_note=blind_note
+                            blind_time=blind_time,
+                            blind_note=blind_note,
+                            blind_note_info=blind_note_info,
                         )
                     )
                 case "note_off":
                     result, q_error = MidiMessageAnalyzer_note_off(
                         **msg_kwarg, note_queue=note_queue
-                    ).analysis(blind_time=blind_time, blind_note=blind_note)
+                    ).analysis(
+                        blind_time=blind_time,
+                        blind_note=blind_note,
+                        blind_note_info=blind_note_info,
+                    )
                 case "rest":
                     result, q_error = MidiMessageAnalyzer_rest(
                         **msg_kwarg, note_queue=note_queue
-                    ).analysis(blind_time=blind_time, blind_note=blind_note)
+                    ).analysis(
+                        blind_time=blind_time,
+                        blind_note=blind_note,
+                        blind_note_info=blind_note_info,
+                    )
                 case "lyrics":
                     result, _lyric, q_error = MidiMessageAnalyzer_lyrics(
                         **msg_kwarg,
                         msg_next=self.track[i + 1],
                         note_address=note_address,
                         note_queue=note_queue,
-                    ).analysis(blind_time=blind_time, blind_note=blind_note)
+                    ).analysis(
+                        blind_time=blind_time,
+                        blind_note=blind_note,
+                        blind_note_info=blind_note_info,
+                    )
                     lyric += _lyric
                 case "measure":
                     result = MidiMessageAnalyzer_measure(
@@ -704,12 +721,14 @@ class MidiMessageAnalyzer_note_on(MidiMessageAnalyzer_SoundUnit):
         self.note_queue[note_address] = note
         return note_address
 
-    def analysis(self, blind_time=False, blind_note=False):
+    def analysis(
+        self, blind_time=False, blind_note=False, blind_note_info=False
+    ):
         addr = self.alloc_note(self.msg.note)
         error, quantized_note = self.closest_note(self.msg.time, as_rest=True)
         info_quantization = ""
         quantization_error = 0
-        if error is not None:
+        if error is not None and not blind_note_info:
             quantization_error = abs(error)
             info_quantization = self.quantization_info(
                 round(error, 3),
@@ -736,7 +755,12 @@ class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
             del self.note_queue[addr]
         return addr
 
-    def analysis(self, blind_time=False, blind_note=False):
+    def analysis(
+        self,
+        blind_time=False,
+        blind_note=False,
+        blind_note_info=False,
+    ):
         addr = self.free_note(self.msg.note)
         color = None if addr is None else f"color({COLOR[addr % len(COLOR)]})"
 
@@ -750,7 +774,7 @@ class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
             info_note_off = f"[#ffffff]{quantized_note.symbol:^9}[/#ffffff]"
         info_quantization = ""
         quantization_error = 0
-        if error is not None:
+        if error is not None and not blind_note_info:
             quantization_error = abs(error)
             info_quantization = self.quantization_info(
                 round(error, 3),
@@ -771,11 +795,16 @@ class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
 class MidiMessageAnalyzer_rest(MidiMessageAnalyzer_SoundUnit):
     """MidiMessageAnalyzer_rest"""
 
-    def analysis(self, blind_time=False, blind_note=False):
+    def analysis(
+        self,
+        blind_time=False,
+        blind_note=False,
+        blind_note_info=False,
+    ):
         error, quantized_note = self.closest_note(self.msg.time, as_rest=True)
         info_quantization = ""
         quantization_error = 0
-        if error is not None:
+        if error is not None and not blind_note_info:
             quantization_error = abs(error)
             info_quantization = self.quantization_info(
                 round(error, 3),
@@ -838,7 +867,11 @@ class MidiMessageAnalyzer_lyrics(
         return True
 
     def analysis(
-        self, blind_time=False, border_color="#ffffff", blind_note=False
+        self,
+        blind_time=False,
+        border_color="#ffffff",
+        blind_note=False,
+        blind_note_info=False,
     ):
         if not self.note_queue and (
             self.msg_next.type != "note_on" or self.msg_next.time != 0
@@ -858,7 +891,7 @@ class MidiMessageAnalyzer_lyrics(
         error, quantized_note = self.closest_note(self.msg.time)
         info_quantization = ""
         quantization_error = 0
-        if error is not None:
+        if error is not None and not blind_note_info:
             quantization_error = abs(error)
             info_quantization = self.quantization_info(
                 round(error, 3),
