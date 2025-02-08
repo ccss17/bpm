@@ -195,7 +195,7 @@ class MidiAnalyzer:
         )
         rprint(header_panel)
 
-        quantization_error, quantization_mean = 0, 0
+        # quantization_error, quantization_mean = 0, 0
         for i, track_analyzer in enumerate(self.track_analyzers):
             console = Console()
             console.rule(
@@ -204,30 +204,30 @@ class MidiAnalyzer:
                 style="#ffffff on #4707a8",
             )
             if track_list is None or track_analyzer.name in track_list:
-                _quantization_error, _quantization_mean = (
-                    track_analyzer.analysis(
-                        track_bound=track_bound,
-                        blind_note=blind_note,
-                        blind_time=blind_time,
-                        blind_lyric=blind_lyric,
-                        blind_note_info=blind_note_info,
-                    )
+                # _quantization_error, _quantization_mean = (
+                track_analyzer.analysis(
+                    track_bound=track_bound,
+                    blind_note=blind_note,
+                    blind_time=blind_time,
+                    blind_lyric=blind_lyric,
+                    blind_note_info=blind_note_info,
                 )
-                quantization_error += _quantization_error
-                quantization_mean += _quantization_mean
+            # )
+            # quantization_error += _quantization_error
+            # quantization_mean += _quantization_mean
 
-        if track_list is None or track_list:
-            if track_list is None:
-                mean_denominator = len(self.mid.tracks)
-            else:
-                mean_denominator = len(track_list)
-            total_q_mean = quantization_mean / mean_denominator
-            print()
-            rprint(
-                "Total quantization error/mean of track error mean: "
-                + f"{float(quantization_error):.5}/"
-                + f"{total_q_mean:.5}"
-            )
+        # if track_list is None or track_list:
+        #     if track_list is None:
+        #         mean_denominator = len(self.mid.tracks)
+        #     else:
+        #         mean_denominator = len(track_list)
+        #     total_q_mean = quantization_mean / mean_denominator
+        #     print()
+        #     rprint(
+        #         "Total quantization error/mean of track error mean: "
+        #         + f"{float(quantization_error):.5}/"
+        #         + f"{total_q_mean:.5}"
+        #     )
 
 
 class MidiTrackAnalyzer:
@@ -436,16 +436,21 @@ class MidiTrackAnalyzer:
                 note_num += 1
 
         rprint(f"Track lyric encode: {self.encoding}")
-        rprint(f"Track total time: {self.length}/{total_time}")
-        q_error_mean = quantization_error / quantization_num
-        rprint(
-            "Track total quantization error/mean: "
-            + f"{quantization_error:.5}/"
-            + f"{q_error_mean: .5}"
+        self.length = md.tick2second(
+            total_time,
+            ticks_per_beat=self.ppqn,
+            tempo=self.tempo,
         )
+        rprint(f"Track total time: {self.length}/{total_time}")
         if not blind_lyric:
             print(f'LYRIC: "{lyric}"')
-        return quantization_error, q_error_mean
+        # q_error_mean = quantization_error / quantization_num
+        # rprint(
+        #     "Track total quantization error/mean: "
+        #     + f"{quantization_error:.5}/"
+        #     + f"{q_error_mean: .5}"
+        # )
+        # return quantization_error, q_error_mean
 
 
 class MidiMessageAnalyzer:
