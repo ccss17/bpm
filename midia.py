@@ -7,7 +7,6 @@ import string
 import pretty_midi
 
 import mido as md
-from mido.midifiles.meta import MetaSpec_time_signature, add_meta_spec
 from mido import MidiFile, Message, MetaMessage
 
 from pydub import AudioSegment
@@ -18,32 +17,13 @@ from rich.panel import Panel
 
 from note import (
     Note,
-    Rest,
     Note_all,
     Rest_all,
     COLOR,
     DEFAULT_TEMPO,
     DEFAULT_TIME_SIGNATURE,
     DEFAULT_PPQN,
-    DEFAULT_MEASURE_SPACE,
 )
-
-
-class MetaSpec_measure(MetaSpec_time_signature):
-    """MetaSpec_measure"""
-
-    type_byte = 0xA1
-    attributes = [
-        "index",
-        "numerator",
-        "denominator",
-        "clocks_per_click",
-        "notated_32nd_notes_per_beat",
-    ]
-    defaults = [1, 4, 4, 24, 8]
-
-
-add_meta_spec(MetaSpec_measure)
 
 
 def tick2beat(tick, ppqn):
@@ -102,36 +82,6 @@ def midifile2wav(midi_path, wav_path, bpm):
     midi2wav(mid, wav_path, bpm)
 
 
-def compare_track(track1, track2):
-    """compare_track"""
-    i = 0
-    j = 0
-    while i < len(track1) or j < len(track2):
-        if (
-            i < len(track1)
-            and track1[i].type == "note_off"
-            and track1[i].note == 0
-        ):
-            rprint(track1[i])
-            i += 1
-            continue
-        if (
-            j < len(track2)
-            and track2[j].type == "note_off"
-            and track2[j].note == 0
-        ):
-            rprint(track1[j])
-            j += 1
-            continue
-        if i < len(track1):
-            rprint(track1[i])
-            i += 1
-        if j < len(track1):
-            rprint(track2[j])
-            j += 1
-        print()
-
-
 class MidiAnalyzer:
     """Class for analysis midi file"""
 
@@ -161,8 +111,15 @@ class MidiAnalyzer:
 
     def quantization(self):
         """quantization"""
-        for i, track_analyzer in enumerate(self.track_analyzers):
-            self.mid.tracks[i] = track_analyzer.quantization()
+        for track_analyzer in self.track_analyzers:
+            track_analyzer.quantization()
+
+    def split_space_note(self, remove_silence_threshold=0.3):
+        """split_space_note"""
+        for track_analyzer in self.track_analyzers:
+            track_analyzer.split_space_note(
+                remove_silence_threshold=remove_silence_threshold
+            )
 
     def analysis(
         self,
@@ -195,7 +152,6 @@ class MidiAnalyzer:
         )
         rprint(header_panel)
 
-        # quantization_error, quantization_mean = 0, 0
         for i, track_analyzer in enumerate(self.track_analyzers):
             console = Console()
             console.rule(
@@ -204,7 +160,6 @@ class MidiAnalyzer:
                 style="#ffffff on #4707a8",
             )
             if track_list is None or track_analyzer.name in track_list:
-                # _quantization_error, _quantization_mean = (
                 track_analyzer.analysis(
                     track_bound=track_bound,
                     blind_note=blind_note,
@@ -212,22 +167,6 @@ class MidiAnalyzer:
                     blind_lyric=blind_lyric,
                     blind_note_info=blind_note_info,
                 )
-            # )
-            # quantization_error += _quantization_error
-            # quantization_mean += _quantization_mean
-
-        # if track_list is None or track_list:
-        #     if track_list is None:
-        #         mean_denominator = len(self.mid.tracks)
-        #     else:
-        #         mean_denominator = len(track_list)
-        #     total_q_mean = quantization_mean / mean_denominator
-        #     print()
-        #     rprint(
-        #         "Total quantization error/mean of track error mean: "
-        #         + f"{float(quantization_error):.5}/"
-        #         + f"{total_q_mean:.5}"
-        #     )
 
 
 class MidiTrackAnalyzer:
@@ -289,11 +228,13 @@ class MidiTrackAnalyzer:
         return msg, error
 
     def quantization(self):
-        """quantization2"""
+        """quantization"""
 
         error = 0
         for msg in self.track:
             if msg.type in ["note_on", "note_off", "lyrics"]:
+                if not msg.time:
+                    continue
                 if error:
                     msg.time += error
                     error = 0
@@ -302,7 +243,48 @@ class MidiTrackAnalyzer:
         if error:
             self.track[-1].time += error
             error = 0
-        return self.track
+
+    def split_space_note(self, remove_silence_threshold=0.3):
+        """split_space_note"""
+        modified_track = []
+        error = 0
+        for msg in self.track:
+            match msg.type:
+                case "note_on":
+                    time = md.tick2second(
+                        msg.time,
+                        ticks_per_beat=self.ppqn,
+                        tempo=self.tempo,
+                    )
+                    if time > remove_silence_threshold:
+                        note_kwarg = {
+                            "note": msg.note,
+                            "velocity": msg.velocity,
+                        }
+                        modified_track += [
+                            Message(
+                                "note_on",
+                                **note_kwarg,
+                                time=0,
+                            ),
+                            MetaMessage("lyrics", text=" "),
+                            Message(
+                                "note_off",
+                                **note_kwarg,
+                                time=msg.time,
+                            ),
+                        ]
+                    else:
+                        error = msg.time
+                    msg.time = 0
+                case "note_off":
+                    if error:
+                        msg.time += error
+                        error = 0
+                case "set_tempo":
+                    self.tempo = msg.tempo
+            modified_track.append(msg)
+        self.track = modified_track
 
     def print_note_num(self, note_num):
         """print_note_num"""
@@ -444,13 +426,6 @@ class MidiTrackAnalyzer:
         rprint(f"Track total time: {self.length}/{total_time}")
         if not blind_lyric:
             print(f'LYRIC: "{lyric}"')
-        # q_error_mean = quantization_error / quantization_num
-        # rprint(
-        #     "Track total quantization error/mean: "
-        #     + f"{quantization_error:.5}/"
-        #     + f"{q_error_mean: .5}"
-        # )
-        # return quantization_error, q_error_mean
 
 
 class MidiMessageAnalyzer:
