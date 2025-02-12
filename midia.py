@@ -840,7 +840,9 @@ class MidiMessageAnalyzer_lyrics(
 
     def is_alnumpunc(self, s):
         """is_alnumpunc"""
-        candidate = string.ascii_letters + string.digits + string.punctuation
+        candidate = (
+            string.ascii_letters + string.digits + string.punctuation + " "
+        )
         for c in s:
             if c not in candidate:
                 return False
@@ -862,7 +864,11 @@ class MidiMessageAnalyzer_lyrics(
             lyric_style = "#98ff29"
             border_color = f"color({COLOR[self.note_address % len(COLOR)]})"
 
-        lyric = self.encoded_text.decode(self.encoding).strip()
+        lyric = self.encoded_text.decode(self.encoding)
+        if lyric.strip():
+            lyric = lyric.strip()
+        else:
+            lyric = " "
         border = f"[{border_color}]│[/{border_color}]"
         lyric_info = (
             f"{lyric:^7}" if self.is_alnumpunc(lyric) else f"{lyric:^6}"
