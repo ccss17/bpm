@@ -567,7 +567,7 @@ if __name__ == "__main__":
     # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
 
     ma = midia.MidiAnalyzer(samples[2]["mid"])
-    ma.split_space_note()
+    ma.split_space_note(remove_silence_threshold=0.3)
     ma.quantization()
     ma.analysis(track_bound=None, track_list=["Melody"], blind_note_info=True)
     # ma.analysis(track_bound=30, track_list=["Melody"])

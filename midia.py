@@ -32,7 +32,7 @@ def tick2beat(tick, ppqn):
 
 
 def beat2tick(beat, ppqn):
-    """tick2beat"""
+    """beat2tick"""
     return int(beat * ppqn)
 
 
