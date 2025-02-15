@@ -274,7 +274,7 @@ class MidiTrackAnalyzer:
                                 time=msg.time,
                             ),
                         ]
-                    else:
+                    else:  # just remove time
                         error = msg.time
                     msg.time = 0
                 case "note_off":
@@ -305,10 +305,7 @@ class MidiTrackAnalyzer:
     ):
         """analysis track"""
         self._init_values()
-        quantization_error = 0.0
-        quantization_num = 1e-6
         note_address = 0
-        q_error = 0
         note_num = 0
         first_tempo = True
         note_queue = {}
@@ -334,17 +331,15 @@ class MidiTrackAnalyzer:
             }
             match msg.type:
                 case "note_on":
-                    result, note_address, q_error = (
-                        MidiMessageAnalyzer_note_on(
-                            **msg_kwarg, note_queue=note_queue
-                        ).analysis(
-                            blind_time=blind_time,
-                            blind_note=blind_note,
-                            blind_note_info=blind_note_info,
-                        )
+                    result, note_address = MidiMessageAnalyzer_note_on(
+                        **msg_kwarg, note_queue=note_queue
+                    ).analysis(
+                        blind_time=blind_time,
+                        blind_note=blind_note,
+                        blind_note_info=blind_note_info,
                     )
                 case "note_off":
-                    result, q_error = MidiMessageAnalyzer_note_off(
+                    result = MidiMessageAnalyzer_note_off(
                         **msg_kwarg, note_queue=note_queue
                     ).analysis(
                         blind_time=blind_time,
@@ -352,7 +347,7 @@ class MidiTrackAnalyzer:
                         blind_note_info=blind_note_info,
                     )
                 case "rest":
-                    result, q_error = MidiMessageAnalyzer_rest(
+                    result = MidiMessageAnalyzer_rest(
                         **msg_kwarg, note_queue=note_queue
                     ).analysis(
                         blind_time=blind_time,
@@ -360,7 +355,7 @@ class MidiTrackAnalyzer:
                         blind_note_info=blind_note_info,
                     )
                 case "lyrics":
-                    result, _lyric, q_error = MidiMessageAnalyzer_lyrics(
+                    result, _lyric = MidiMessageAnalyzer_lyrics(
                         **msg_kwarg,
                         msg_next=self.track[i + 1],
                         note_address=note_address,
@@ -413,8 +408,6 @@ class MidiTrackAnalyzer:
                 rprint(result)
 
             if msg.type in ["note_on", "note_off", "lyrics"]:
-                quantization_error += q_error
-                quantization_num += 1 if q_error else 0
                 note_num += 1
 
         rprint(f"Track lyric encode: {self.encoding}")
@@ -707,9 +700,7 @@ class MidiMessageAnalyzer_note_on(MidiMessageAnalyzer_SoundUnit):
         addr = self.alloc_note(self.msg.note)
         error, quantized_note = self.closest_note(self.msg.time, as_rest=True)
         info_quantization = ""
-        quantization_error = 0
         if error is not None and not blind_note_info:
-            quantization_error = abs(error)
             info_quantization = self.quantization_info(
                 round(error, 3),
                 tick2beat(self.msg.time, self.ppqn),
@@ -722,7 +713,7 @@ class MidiMessageAnalyzer_note_on(MidiMessageAnalyzer_SoundUnit):
             result = self.result(
                 head=note_msg, body=info_quantization, blind_time=blind_time
             )
-        return result, addr, quantization_error
+        return result, addr
 
 
 class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
@@ -753,9 +744,7 @@ class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
         else:
             info_note_off = f"[#ffffff]{quantized_note.symbol:^9}[/#ffffff]"
         info_quantization = ""
-        quantization_error = 0
         if error is not None and not blind_note_info:
-            quantization_error = abs(error)
             info_quantization = self.quantization_info(
                 round(error, 3),
                 tick2beat(self.msg.time, self.ppqn),
@@ -769,7 +758,7 @@ class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
                 blind_time=blind_time,
             )
 
-        return result, quantization_error
+        return result
 
 
 class MidiMessageAnalyzer_rest(MidiMessageAnalyzer_SoundUnit):
@@ -783,9 +772,7 @@ class MidiMessageAnalyzer_rest(MidiMessageAnalyzer_SoundUnit):
     ):
         error, quantized_note = self.closest_note(self.msg.time, as_rest=True)
         info_quantization = ""
-        quantization_error = 0
         if error is not None and not blind_note_info:
-            quantization_error = abs(error)
             info_quantization = self.quantization_info(
                 round(error, 3),
                 tick2beat(self.msg.time, self.ppqn),
@@ -802,7 +789,7 @@ class MidiMessageAnalyzer_rest(MidiMessageAnalyzer_SoundUnit):
                 blind_time=blind_time,
             )
 
-        return result, quantization_error
+        return result
 
 
 class MidiMessageAnalyzer_lyrics(
@@ -876,9 +863,7 @@ class MidiMessageAnalyzer_lyrics(
 
         error, quantized_note = self.closest_note(self.msg.time)
         info_quantization = ""
-        quantization_error = 0
         if error is not None and not blind_note_info:
-            quantization_error = abs(error)
             info_quantization = self.quantization_info(
                 round(error, 3),
                 tick2beat(self.msg.time, self.ppqn),
@@ -898,4 +883,4 @@ class MidiMessageAnalyzer_lyrics(
                 body=info_quantization,
                 blind_time=blind_time,
             )
-        return result, lyric, quantization_error
+        return result, lyric

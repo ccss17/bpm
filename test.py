@@ -570,6 +570,7 @@ if __name__ == "__main__":
     ma.split_space_note(remove_silence_threshold=0.3)
     ma.quantization()
     ma.analysis(track_bound=None, track_list=["Melody"], blind_note_info=True)
+    # ma.analysis(track_bound=None, track_list=None, blind_note_info=False)
     # ma.analysis(track_bound=30, track_list=["Melody"])
     # mid_path = "test_q2_midi.mid"
     # mid_path = "test_q_ff_merged_midi.mid"
