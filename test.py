@@ -2,7 +2,14 @@
 
 import pathlib
 import sys
+import multiprocessing as mp
+import pathlib
+import random
+import os
 
+import numpy as np
+import librosa
+import soundfile
 import mido
 from rich import print as rprint
 from rich import pretty
@@ -15,6 +22,11 @@ from rich.text import Text
 # from rich.console import Group
 # from rich.padding import Padding
 # from rich.color import Color
+
+from g2pk import G2p
+
+
+from slicer2 import Slicer
 
 import bpmlib
 import midia
@@ -509,6 +521,78 @@ def test_custom_msg():
     rprint(MetaMessage("rest", time=888))
 
 
+def test_slice(wav_path):
+    """test_slice"""
+    audio, sr = librosa.load(wav_path, sr=None, mono=False)
+    slicer = Slicer(
+        sr=sr,
+        threshold=-40,
+        min_length=5000,
+        min_interval=300,
+        hop_size=10,
+        max_sil_kept=500,
+    )
+    chunks = slicer.slice(audio)
+    dir_path = "clips"
+    for i, chunk in enumerate(chunks):
+        if len(chunk.shape) > 1:
+            chunk = chunk.T  # Swap axes if the audio is stereo.
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        soundfile.write(
+            f"{dir_path}/example_{i:02}.wav", chunk, sr
+        )  # Save sliced audio files with soundfile.
+
+
+def test_clips_duration():
+    """test_clips_duration"""
+    data_path = pathlib.Path("clips")
+    time = 0
+    for clip in sorted(data_path.rglob("*.wav")):
+        duration = librosa.get_duration(path=clip)
+        time += duration
+        print(clip, duration)
+    print(time)
+    print(librosa.get_duration(path="sample/ba_05688_-4_a_s02_m_02.wav"))
+
+
+def test_slice_midi(wav_path, mid_path):
+    """test_slice_midi"""
+    ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
+    ma.split_space_note(remove_silence_threshold=0.3)
+    ma.quantization(unit="32")
+    # ma.analysis(
+    #     track_bound=None,
+    #     track_list=None,
+    #     blind_note_info=True,
+    #     blind_lyric=False,
+    # )
+
+    audio, sr = librosa.load(wav_path, sr=None, mono=False)
+    slicer = Slicer(
+        sr=sr,
+        threshold=-40,
+        min_length=5000,
+        min_interval=300,
+        hop_size=10,
+        max_sil_kept=500,
+    )
+    chunks = slicer.slice(audio)
+    rprint(slicer.chunks_time)
+
+    # begin, end = slicer.chunks_time[0]
+    # rprint(ma.slice(begin / 100, end / 100))
+    # chunks_time = [
+    #     (chunk_time[0] / 100, chunk_time[1] / 100)
+    #     for chunk_time in slicer.chunks_time
+    # ]
+    g2p = G2p()
+    for item in ma.slice_chunks_time(slicer.chunks_time):
+        rprint(item)
+        print(g2p(item[-1]))
+        print()
+
+
 if __name__ == "__main__":
     samples = [
         {
@@ -570,10 +654,18 @@ if __name__ == "__main__":
     # midia.MidiAnalyzer(samples[2]["mid"]).analysis(track_bound=15)
     # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
 
-    ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
-    ma.split_space_note(remove_silence_threshold=0.3)
-    ma.quantization(unit="32")
-    ma.analysis(track_bound=None, track_list=None, blind_note_info=True)
+    # test_slice(samples[2]["wav"])
+    # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
+    # ma.split_space_note(remove_silence_threshold=0.3)
+    # ma.quantization(unit="32")
+    # ma.analysis(
+    #     track_bound=None,
+    #     track_list=None,
+    #     blind_note_info=True,
+    # )
+    test_slice_midi(samples[2]["wav"], samples[2]["mid"])
+    # test_clips_duration()
+    # ma.slice()
     # ma.analysis(track_bound=30, track_list=["Melody"])
     # mid_path = "test_q2_midi.mid"
     # mid_path = "test_q_ff_merged_midi.mid"
