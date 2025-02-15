@@ -18,6 +18,7 @@ from rich.text import Text
 
 import bpmlib
 import midia
+import note
 
 
 def test_bpm_estimator_librosa(audio_path):
@@ -569,17 +570,17 @@ if __name__ == "__main__":
     # midia.MidiAnalyzer(samples[2]["mid"]).analysis(track_bound=15)
     # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
 
-    # ma = midia.MidiAnalyzer(samples[2]["mid"])
-    # ma.split_space_note(remove_silence_threshold=0.3)
-    # ma.quantization()
-    # ma.analysis(track_bound=None, track_list=["Melody"], blind_note_info=True)
-    # ma.analysis(track_bound=None, track_list=None, blind_note_info=False)
+    ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
+    ma.split_space_note(remove_silence_threshold=0.3)
+    ma.quantization(unit="32")
+    ma.analysis(track_bound=None, track_list=None, blind_note_info=True)
     # ma.analysis(track_bound=30, track_list=["Melody"])
     # mid_path = "test_q2_midi.mid"
     # mid_path = "test_q_ff_merged_midi.mid"
+    # mid_path = "test_qs_midi.mid"
     # ma.mid.save(mid_path)
-    # ma = midia.MidiAnalyzer(mid_path)
-    # ma.analysis(track_bound=None, track_list=None)
+    # ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
+    # ma.analysis(track_bound=None, track_list=None, blind_note_info=True)
     # print(list(Note)[-1].value.beat, list(Note)[-1].value.beat / 2)
     # midia.midi2wav(ma.mid, "test.wav", 62)
 
@@ -595,15 +596,6 @@ if __name__ == "__main__":
     #     beat = 4 * (3 / 4) ** ((i + 1) // 2) * (2 / 3) ** (i // 2)
     #     return round(beat, 4)
     # ma.analysis()
-
-    # 에러 사항 출력:
-    # ticks per beat 기반으로 가사와 음표가 몇분음표인지 출력
-    # quantization 에러를 줄여야 함. --> 에러가 중첩되니까 --> 싱크를 맞춰야 함.
-    # --> 이전 quantization 에러를 고려해서 다음 노트의 에러를 계산해야 함.
-    # 에러가 - 면 밀렸다, + 면 땡겨졌다 이런 식으로 판단해서, 지금은 에러를 독립적으로
-    # 보기 때문에 에러가 계속 중첩 되는 상황
-    # --> 최종적으로는 quantization 된 mid 파일을 음원으로 재생하고, 노래를 같이 재생해보면서
-    # 싱크가 맞으면 제대로 했다 이런 결론을 내릴 수 있음.
 
     #
     # LYRIC PATCH TEST
@@ -688,17 +680,17 @@ if __name__ == "__main__":
     # rprint(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path)
     # rprint()
-    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
     # rprint(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path)
 
-    sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
-    for p1, p2 in zip(
-        sorted(data_path.rglob("*.wav")), sorted(data_path.rglob("*.mid"))
-    ):
-        print(p1)
-        print(p2)
-        print()
+    # sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
+    # for p1, p2 in zip(
+    #     sorted(data_path.rglob("*.wav")), sorted(data_path.rglob("*.mid"))
+    # ):
+    #     print(p1)
+    #     print(p2)
+    #     print()
     #
     # Output:
     #

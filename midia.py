@@ -109,15 +109,15 @@ class MidiAnalyzer:
             for track in self.mid.tracks
         ]
 
-    def quantization(self):
+    def quantization(self, unit="32"):
         """quantization"""
-        for track_analyzer in self.track_analyzers:
-            track_analyzer.quantization()
+        for i, track_analyzer in enumerate(self.track_analyzers):
+            self.mid.tracks[i] = track_analyzer.quantization(unit=unit)
 
     def split_space_note(self, remove_silence_threshold=0.3):
         """split_space_note"""
-        for track_analyzer in self.track_analyzers:
-            track_analyzer.split_space_note(
+        for i, track_analyzer in enumerate(self.track_analyzers):
+            self.mid.tracks[i] = track_analyzer.split_space_note(
                 remove_silence_threshold=remove_silence_threshold
             )
 
@@ -199,7 +199,7 @@ class MidiTrackAnalyzer:
             result.append(_msg_on)
         return result
 
-    def _quantization(self, msg):
+    def _quantization(self, msg, unit="32"):
         q_time = None
         total_q_time = 0
         error = 0
@@ -213,36 +213,43 @@ class MidiTrackAnalyzer:
             elif beat == q_beat:  # msg is quantized
                 msg.time += total_q_time
                 return msg, error
+            if unit in note_item.value.name_short:
+                beat_unit = note_item.value.beat  # beat_unit
+                break
 
-        # now, beat in [0, 0.125)
+        # beat in [0, beat_unit), i.e. beat_unit=0.125
         beat = tick2beat(msg.time, self.ppqn)
-        beat_unit = list(Note)[-1].value.beat  # 0.125
-        if beat < beat_unit / 2:  # beat in [0, 0.125/2)
+        if beat < beat_unit / 2:  # beat in [0, beat_unit/2)
             error = msg.time
             msg.time = 0  # approximate to beat=0
-        elif beat < beat_unit:  # beat in [0.125/2, 0.125)
+        elif beat < beat_unit:  # beat in [beat_unit/2, beat_unit)
             error = msg.time - beat2tick(beat_unit, self.ppqn)
-            # approximate to beat=0.125
+            # approximate to beat=beat_unit
             msg.time = beat2tick(beat_unit, self.ppqn)
         msg.time += total_q_time
         return msg, error
 
-    def quantization(self):
+    def quantization(self, unit="32"):
         """quantization"""
+        if not any([unit in n.value.name_short for n in list(Note)]):
+            raise ValueError
 
         error = 0
-        for msg in self.track:
+        last_note = 0
+        for i, msg in enumerate(self.track):
             if msg.type in ["note_on", "note_off", "lyrics"]:
                 if not msg.time:
                     continue
                 if error:
                     msg.time += error
                     error = 0
-                msg, error = self._quantization(msg)
+                msg, error = self._quantization(msg, unit=unit)
+                last_note = i
 
         if error:
-            self.track[-1].time += error
-            error = 0
+            # self.track[-1].time += error
+            self.track[last_note].time += error
+        return self.track
 
     def split_space_note(self, remove_silence_threshold=0.3):
         """split_space_note"""
@@ -262,11 +269,6 @@ class MidiTrackAnalyzer:
                             "velocity": msg.velocity,
                         }
                         modified_track += [
-                            Message(
-                                "note_on",
-                                **note_kwarg,
-                                time=0,
-                            ),
                             MetaMessage("lyrics", text=" "),
                             Message(
                                 "note_off",
@@ -285,6 +287,7 @@ class MidiTrackAnalyzer:
                     self.tempo = msg.tempo
             modified_track.append(msg)
         self.track = modified_track
+        return self.track
 
     def print_note_num(self, note_num):
         """print_note_num"""
@@ -293,7 +296,7 @@ class MidiTrackAnalyzer:
             md.tempo2bpm(self.tempo, time_signature=self.time_signature)
         )
         info = f"[bold {color}]Total item num of BPM({bpm}): " + f"{note_num}"
-        Console(width=55).rule(info, style=f"{color}")
+        Console().rule(info, style=f"{color}")
 
     def analysis(
         self,
@@ -308,6 +311,7 @@ class MidiTrackAnalyzer:
         note_address = 0
         note_num = 0
         first_tempo = True
+        prev_tempo = None
         note_queue = {}
         if track_bound is None:
             track_bound = float("inf")
@@ -357,9 +361,7 @@ class MidiTrackAnalyzer:
                 case "lyrics":
                     result, _lyric = MidiMessageAnalyzer_lyrics(
                         **msg_kwarg,
-                        msg_next=self.track[i + 1],
                         note_address=note_address,
-                        note_queue=note_queue,
                     ).analysis(
                         blind_time=blind_time,
                         blind_note=blind_note,
@@ -383,6 +385,13 @@ class MidiTrackAnalyzer:
                         **msg_kwarg,
                         time_signature=self.time_signature,
                     ).analysis(blind_time=blind_time)
+                    if prev_tempo is None:
+                        prev_tempo = self.tempo
+                    if note_num:
+                        prev_tempo = self.tempo
+                        note_num = 0
+                    else:
+                        self.tempo = prev_tempo
                 case "end_of_track":
                     if self.convert_1_to_0:
                         self.print_note_num(note_num)
@@ -416,7 +425,11 @@ class MidiTrackAnalyzer:
             ticks_per_beat=self.ppqn,
             tempo=self.tempo,
         )
-        rprint(f"Track total time: {self.length}/{total_time}")
+        rprint("Track total secs/time: " + f"{self.length}/{total_time}")
+        bpm = round(
+            md.tempo2bpm(self.tempo, time_signature=self.time_signature)
+        )
+        rprint("ppqn/bpm(tempo): " + f"{self.ppqn}/{bpm}({self.tempo})")
         if not blind_lyric:
             print(f'LYRIC: "{lyric}"')
 
@@ -499,7 +512,7 @@ class MidiMessageAnalyzer_set_tempo(MidiMessageAnalyzer):
         )
         result = self.result(
             head=self.info_type(),
-            body=f"[white]BPM=[/white][color(190)]{bpm}[/color(190)]",
+            body=f"[white]BPM=[/white][color(190)]{bpm}({self.msg.tempo})[/color(190)]",
             blind_time=blind_time,
         )
         return result, self.msg.tempo
@@ -800,7 +813,6 @@ class MidiMessageAnalyzer_lyrics(
     def __init__(
         self,
         msg,
-        msg_next,
         note_address,
         ppqn=DEFAULT_PPQN,
         tempo=DEFAULT_TEMPO,
@@ -808,21 +820,15 @@ class MidiMessageAnalyzer_lyrics(
         length=0,
         encoding="utf-8",
         encoding_alternative="cp949",
-        note_queue=None,
     ):
         self.msg = msg
         self.ppqn = ppqn
         self.tempo = tempo
         self.idx_info = f"[color(244)]{idx:4}[/color(244)]"
         self.length = length
-        if note_queue is None:
-            self.note_queue = {}
-        else:
-            self.note_queue = note_queue
         self._init_encoding(
             encoding=encoding, encoding_alternative=encoding_alternative
         )
-        self.msg_next = msg_next
         self.note_address = note_address
 
     def is_alnumpunc(self, s):
@@ -842,20 +848,14 @@ class MidiMessageAnalyzer_lyrics(
         blind_note=False,
         blind_note_info=False,
     ):
-        if not self.note_queue and (
-            self.msg_next.type != "note_on" or self.msg_next.time != 0
-        ):  # error case
-            lyric_style = "white on red"
-            border_color = "white on red"
-        else:
-            lyric_style = "#98ff29"
-            border_color = f"color({COLOR[self.note_address % len(COLOR)]})"
+        lyric_style = "#98ff29"
+        border_color = f"color({COLOR[self.note_address % len(COLOR)]})"
 
         lyric = self.encoded_text.decode(self.encoding)
         if lyric.strip():
             lyric = lyric.strip()
         else:
-            lyric = " "
+            lyric = "' '"
         border = f"[{border_color}]│[/{border_color}]"
         lyric_info = (
             f"{lyric:^7}" if self.is_alnumpunc(lyric) else f"{lyric:^6}"
