@@ -1,5 +1,8 @@
 """Module for test code"""
 
+import pathlib
+import sys
+
 import mido
 from rich import print as rprint
 from rich import pretty
@@ -566,10 +569,10 @@ if __name__ == "__main__":
     # midia.MidiAnalyzer(samples[2]["mid"]).analysis(track_bound=15)
     # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
 
-    ma = midia.MidiAnalyzer(samples[2]["mid"])
-    ma.split_space_note(remove_silence_threshold=0.3)
-    ma.quantization()
-    ma.analysis(track_bound=None, track_list=["Melody"], blind_note_info=True)
+    # ma = midia.MidiAnalyzer(samples[2]["mid"])
+    # ma.split_space_note(remove_silence_threshold=0.3)
+    # ma.quantization()
+    # ma.analysis(track_bound=None, track_list=["Melody"], blind_note_info=True)
     # ma.analysis(track_bound=None, track_list=None, blind_note_info=False)
     # ma.analysis(track_bound=30, track_list=["Melody"])
     # mid_path = "test_q2_midi.mid"
@@ -685,9 +688,17 @@ if __name__ == "__main__":
     # rprint(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path)
     # rprint()
-    # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
     # rprint(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path)
+
+    sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
+    for p1, p2 in zip(
+        sorted(data_path.rglob("*.wav")), sorted(data_path.rglob("*.mid"))
+    ):
+        print(p1)
+        print(p2)
+        print()
     #
     # Output:
     #
