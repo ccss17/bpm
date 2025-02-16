@@ -30,6 +30,12 @@ class Rest(Enum):
     SIXTY_FOURTH_REST = NoteNamedTuple(
         0.0625, "sixty-fourth rest", "64분쉼표", "𝅁", "r/64"
     )
+    HUNDRED_TWENTY_EIGHTH_REST = NoteNamedTuple(
+        0.03125, "hundred twenty-eighth rest", "128분쉼표", "𝅂", "r/128"
+    )
+    TWO_HUNDRED_FIFTY_SIXTH_REST = NoteNamedTuple(
+        0.015625, "two hundred fifty-sixth rest", "256분쉼표", "𝅂", "r/256"
+    )
 
 
 class Note(Enum):
@@ -47,6 +53,12 @@ class Note(Enum):
     )
     SIXTY_FOURTH_NOTE = NoteNamedTuple(
         0.0625, "sixty-fourth note", "64분음표", "𝅘𝅥𝅱", "n/64"
+    )
+    HUNDRED_TWENTY_EIGHTH_NOTE = NoteNamedTuple(
+        0.03125, "hundred twenty-eighth note", "128분음표", "𝅘𝅥𝅲", "n/128"
+    )
+    TWO_HUNDRED_FIFTY_SIXTH_NOTE = NoteNamedTuple(
+        0.015625, "two hundred fifty-sixth note", "256분음표", "𝅘𝅥𝅲", "n/256"
     )
 
 

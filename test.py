@@ -560,7 +560,7 @@ def test_slice_midi(wav_path, mid_path):
     """test_slice_midi"""
     ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
     ma.split_space_note(remove_silence_threshold=0.3)
-    ma.quantization(unit="32")
+    ma.quantization(unit="128")
     # ma.analysis(
     #     track_bound=None,
     #     track_list=None,
@@ -578,7 +578,8 @@ def test_slice_midi(wav_path, mid_path):
         max_sil_kept=500,
     )
     chunks = slicer.slice(audio)
-    rprint(slicer.chunks_time)
+    for chunk_time in slicer.chunks_time:
+        print(chunk_time, (chunk_time[1] - chunk_time[0]) / 100)
 
     # begin, end = slicer.chunks_time[0]
     # rprint(ma.slice(begin / 100, end / 100))
@@ -588,8 +589,10 @@ def test_slice_midi(wav_path, mid_path):
     # ]
     g2p = G2p()
     for item in ma.slice_chunks_time(slicer.chunks_time):
-        rprint(item)
-        print(g2p(item[-1]))
+        rprint(item[0])
+        rprint(f"{item[1]} = [red]{np.sum(item[1]):.2f}[/red]")
+        rprint(f'"{item[2]}"')
+        rprint(f'"{g2p(item[-1])}"')
         print()
 
 
@@ -657,7 +660,7 @@ if __name__ == "__main__":
     # test_slice(samples[2]["wav"])
     # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
     # ma.split_space_note(remove_silence_threshold=0.3)
-    # ma.quantization(unit="32")
+    # ma.quantization(unit="256")
     # ma.analysis(
     #     track_bound=None,
     #     track_list=None,

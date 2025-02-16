@@ -5,7 +5,7 @@ from collections import defaultdict
 import string
 
 import pretty_midi
-
+import numpy as np
 import mido as md
 from mido import MidiFile, Message, MetaMessage
 
@@ -250,7 +250,9 @@ class MidiTrackAnalyzer:
 
     def quantization(self, unit="32"):
         """quantization"""
-        if not any([unit in n.value.name_short for n in list(Note)]):
+        if not any(
+            [unit == n.value.name_short.split("/")[-1] for n in list(Note)]
+        ):
             raise ValueError
 
         error = 0
@@ -322,7 +324,7 @@ class MidiTrackAnalyzer:
                         durations.append(end - prev_total_secs)
                         if not len(pitchs) == len(durations) == len(lyrics):
                             raise ValueError
-                        return pitchs, durations, lyrics
+                        return np.array(pitchs), np.array(durations), lyrics
 
         return None, None, None
 
@@ -822,7 +824,8 @@ class MidiMessageAnalyzer_note_off(MidiMessageAnalyzer_SoundUnit):
             _note_info = self.note_info(self.msg.note)
             info_note_off = f"[{color}]└{_note_info}┘[/{color}]"
         else:
-            info_note_off = f"[#ffffff]{quantized_note.symbol:^9}[/#ffffff]"
+            symbol = quantized_note.symbol if quantized_note else "0"
+            info_note_off = f"[#ffffff]{symbol:^9}[/#ffffff]"
         info_quantization = ""
         if error is not None and not blind_note_info:
             info_quantization = self.quantization_info(
