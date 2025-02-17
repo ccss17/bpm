@@ -287,7 +287,10 @@ class MidiTrackAnalyzer:
                 prev_total_secs = total_secs
             if msg.type == "lyrics":
                 prev_lyric = lyric
-                lyric = MidiMessageAnalyzer_lyrics(msg).lyric
+                mmal = MidiMessageAnalyzer_lyrics(msg, encoding=self.encoding)
+                if self.encoding != mmal.encoding:
+                    self.encoding = mmal.encoding
+                lyric = mmal.lyric
             total_secs += md.tick2second(
                 msg.time,
                 ticks_per_beat=self.ppqn,
@@ -324,6 +327,8 @@ class MidiTrackAnalyzer:
                         durations.append(end - prev_total_secs)
                         if not len(pitchs) == len(durations) == len(lyrics):
                             raise ValueError
+                        return np.array(pitchs), np.array(durations), lyrics
+                    case "end_of_track":
                         return np.array(pitchs), np.array(durations), lyrics
 
         return None, None, None
@@ -428,9 +433,13 @@ class MidiTrackAnalyzer:
                         blind_note_info=blind_note_info,
                     )
                 case "lyrics":
-                    result, _lyric = MidiMessageAnalyzer_lyrics(
+                    mmal = MidiMessageAnalyzer_lyrics(
                         **msg_kwarg,
-                    ).analysis(
+                        encoding=self.encoding,
+                    )
+                    if self.encoding != mmal.encoding:
+                        self.encoding = mmal.encoding
+                    result, _lyric = mmal.analysis(
                         note_address=note_address,
                         blind_time=blind_time,
                         blind_note=blind_note,
@@ -442,10 +451,13 @@ class MidiTrackAnalyzer:
                         self.time_signature
                     ).analysis()
                 case "text" | "track_name":
-                    result = MidiMessageAnalyzer_text(
+                    mmat = MidiMessageAnalyzer_text(
                         **msg_kwarg,
                         encoding=self.encoding,
-                    ).analysis(blind_time=blind_time)
+                    )
+                    if self.encoding != mmat.encoding:
+                        self.encoding = mmat.encoding
+                    result = mmat.analysis(blind_time=blind_time)
                 case "set_tempo":
                     if not first_tempo and self.convert_1_to_0:
                         self.print_note_num(note_num)
