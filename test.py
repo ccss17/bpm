@@ -660,11 +660,11 @@ if __name__ == "__main__":
     # test_slice(samples[2]["wav"])
     # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
     # ma.split_space_note(remove_silence_threshold=0.3)
-    # ma.quantization(unit="256")
+    # ma.quantization(unit="32")
     # ma.analysis(
-    #     track_bound=None,
-    #     track_list=None,
-    #     blind_note_info=True,
+        # track_bound=None,
+        # track_list=None,
+        # blind_note_info=True,
     # )
     test_slice_midi(samples[2]["wav"], samples[2]["mid"])
     # test_clips_duration()
