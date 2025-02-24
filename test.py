@@ -464,6 +464,7 @@ def test_insert_lyrics(midi_obj, target_track_list=None):
         + "가세월가버렸다고이젠나를잊고 서멀리멀리떠나가는가아아나는몰랐네그대마음변할주우울난정말몰랐었네오오오 난"
         + "너하나만으을믿고살았네에에그대만으을믿었네오네가아보고파서어나는어쩌나 아아그리우움만쌓이네H"
     )
+    lyric = """J 다정했던사람이여나를잊었나 벌써나를 잊어버렸나 그리움만남겨놓고나를잊었나 벌써나를잊어 버렸나 그대지금그누구를사랑하는가 굳은약속 변해버렸나 예전에는우린서로사랑 했는데 이젠맘이변해 버렸나 아이별이 그리쉬운가 세월가버렸다고 이젠나를잊고서멀리 멀리떠나가는가 아아나는몰랐네 그대마음변할주우울 난정말몰랐었네 오나너하나만으을 믿고살았네에에에 그대만으을믿었네 오네가보고파서어 나는어쩌나아아 그리우움만쌓이네 아이별이 그리쉬운가 세월가버렸다고 이젠나를잊고서 멀리  멀리떠나가는가 아아나는몰랐네 그대마음변할주우울 난정말몰랐었네 오오오난너하나만으을 믿고살았네에에 그대만으을믿었네 오네가아 보고파서어나는어쩌나아아 그리우움만쌓이네 H"""
     for i, track in enumerate(midi_obj.tracks):
         if target_track_list is None or track.name in target_track_list:
             modified_track = []
@@ -663,7 +664,7 @@ if __name__ == "__main__":
     # midia.MidiAnalyzer(samples[2]["mid"]).analysis(track_bound=15)
     # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
 
-    # test_slice(samples[2]["wav"], "clips")
+    test_slice(samples[2]["wav"], "clips_ver4")
     # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
     # ma.split_space_note(remove_silence_threshold=0.3)
     # ma.quantization(unit="32")
@@ -673,7 +674,7 @@ if __name__ == "__main__":
     #     blind_note_info=True,
     #     blind_lyric=False,
     # )
-    test_slice_midi(samples[2]["wav"], samples[2]["mid"])
+    # test_slice_midi(samples[2]["wav"], samples[2]["mid"])
     # test_clips_duration("clips_prev")
     # test_clips_duration("clips")
     # ma.slice()
