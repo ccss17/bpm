@@ -197,6 +197,8 @@ class Slicer:
 
     # @timeit
     def slice(self, waveform):
+        if self.chunks_time:
+            self.chunks_time = []
         # 다채널 처리
         if len(waveform.shape) > 1:
             samples = waveform.mean(axis=0)
