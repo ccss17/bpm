@@ -123,7 +123,7 @@ class MidiAnalyzer:
             )
 
     def slice_chunks_time(self, chunks_time):
-        """slice"""
+        """slice_chunks_time"""
         if self.mid.type == 1 and not self.convert_1_to_0:
             raise RuntimeError
         result = []
@@ -133,6 +133,12 @@ class MidiAnalyzer:
                 self.track_analyzers[0].slice(begin / 100, end / 100)
             )
         return result
+
+    def slice_slience(self):
+        """slice_slience"""
+        if self.mid.type == 1 and not self.convert_1_to_0:
+            raise RuntimeError
+        return self.track_analyzers[0].slice_slience()
 
     def slice(self, begin, end):
         """slice"""
@@ -271,6 +277,22 @@ class MidiTrackAnalyzer:
             self.track[last_note].time += error
         return self.track
 
+    def slice_slience(self):
+        """slice_slience"""
+        result = []
+        chunk = []
+        for msg in self.track:
+            if msg.type == "lyrics":
+                mmal = MidiMessageAnalyzer_lyrics(msg, encoding=self.encoding)
+                if mmal.lyric == " ":
+                    if chunk:
+                        result.append(chunk)
+                        chunk = []
+                else:
+                    chunk.append(mmal.lyric)
+            if msg.type == "note_off":
+                chunk.append(msg.note)
+
     def slice(self, begin, end):
         """slice"""
         pitchs = []
@@ -325,6 +347,8 @@ class MidiTrackAnalyzer:
                             tempo=self.tempo,
                         )
                         durations.append(end - prev_total_secs)
+                        rprint(len(pitchs), len(durations), len(lyrics))
+                        rprint(pitchs, durations, lyrics)
                         if not len(pitchs) == len(durations) == len(lyrics):
                             raise ValueError
                         return np.array(pitchs), np.array(durations), lyrics
@@ -966,4 +990,4 @@ class MidiMessageAnalyzer_lyrics(
                 body=info_quantization,
                 blind_time=blind_time,
             )
-        return result, lyric
+        return result, self.lyric

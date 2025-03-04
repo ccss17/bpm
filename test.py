@@ -11,6 +11,9 @@ import numpy as np
 import librosa
 import soundfile
 import mido
+from pydub import AudioSegment
+from pydub.silence import split_on_silence
+
 from rich import print as rprint
 from rich import pretty
 from rich.panel import Panel
@@ -26,8 +29,8 @@ from rich.text import Text
 from g2pk import G2p
 
 
-# from slicer2 import Slicer
-from slicer2_ver4 import Slicer
+from slicer2 import Slicer
+# from slicer2_ver4 import Slicer
 
 import bpmlib
 import midia
@@ -456,14 +459,6 @@ def test_modify_lyrics(midi_path, out_path):
 
 def test_insert_lyrics(midi_obj, target_track_list=None):
     """test_insert_lyrics"""
-    lyric = (
-        "다정했던사람이여나를잊었나벌써나를잊어버렸나그리움만남겨놓고나를잊었나벌써나를잊어버렸나그대지금그누"
-        + "구를사랑하는가굳은약속변해버렸나예전 에는우린서로사랑했는데이젠맘이변해버렸나아이별이그리쉬운가세월"
-        + "가버렸다고 이젠나를잊고서멀리멀리떠나가는가아아나는몰랐네그대마음변할주우울난정말몰 랐었네오나너하나"
-        + "만으을믿고살았네에에에그대만으을믿었네오네가보고파서어나 는어쩌나아아그리우움만쌓이네아이별이그리쉬운"
-        + "가세월가버렸다고이젠나를잊고 서멀리멀리떠나가는가아아나는몰랐네그대마음변할주우울난정말몰랐었네오오오 난"
-        + "너하나만으을믿고살았네에에그대만으을믿었네오네가아보고파서어나는어쩌나 아아그리우움만쌓이네H"
-    )
     lyric = """J 다정했던사람이여나를잊었나 벌써나를 잊어버렸나 그리움만남겨놓고나를잊었나 벌써나를잊어 버렸나 그대지금그누구를사랑하는가 굳은약속 변해버렸나 예전에는우린서로사랑 했는데 이젠맘이변해 버렸나 아이별이 그리쉬운가 세월가버렸다고 이젠나를잊고서멀리 멀리떠나가는가 아아나는몰랐네 그대마음변할주우울 난정말몰랐었네 오나너하나만으을 믿고살았네에에에 그대만으을믿었네 오네가보고파서어 나는어쩌나아아 그리우움만쌓이네 아이별이 그리쉬운가 세월가버렸다고 이젠나를잊고서 멀리  멀리떠나가는가 아아나는몰랐네 그대마음변할주우울 난정말몰랐었네 오오오난너하나만으을 믿고살았네에에 그대만으을믿었네 오네가아 보고파서어나는어쩌나아아 그리우움만쌓이네 H"""
     for i, track in enumerate(midi_obj.tracks):
         if target_track_list is None or track.name in target_track_list:
@@ -574,13 +569,15 @@ def test_slice_midi(wav_path, mid_path):
         sr=sr,
         threshold=-40,
         min_length=5000,
+        max_length=500,
         min_interval=300,
         hop_size=10,
         max_sil_kept=500,
     )
     chunks = slicer.slice(audio)
+    print("chunk_time:")
     for chunk_time in slicer.chunks_time:
-        print(chunk_time, (chunk_time[1] - chunk_time[0]) / 100)
+        rprint(chunk_time, (chunk_time[1] - chunk_time[0]) / 100)
 
     # begin, end = slicer.chunks_time[0]
     # rprint(ma.slice(begin / 100, end / 100))
@@ -604,7 +601,7 @@ def test_slice_midi(wav_path, mid_path):
 
 
 def test_trim_slice(wav_path, dir_path):
-    """test_slice"""
+    """test_trim_slice"""
     audio, sr = librosa.load(wav_path, sr=None, mono=False)
     slicer = Slicer(
         sr=sr,
@@ -627,7 +624,7 @@ def test_trim_slice(wav_path, dir_path):
 
 
 def test_trim_slice_midi(wav_path, mid_path):
-    """test_slice_midi"""
+    """test_trim_slice_midi"""
     ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
     ma.split_space_note(remove_silence_threshold=0.3)
     ma.quantization(unit="32")
@@ -677,6 +674,96 @@ def test_trim_slice_midi(wav_path, mid_path):
     #     else:
     #         rprint(f'"{g2p(item[-1])}"')
     #     print()
+
+
+def test_split_audio_pydub(wav_path, dir_path):
+    # Load the audio file
+    audio = AudioSegment.from_file(wav_path, format="wav")
+
+    # Parameters
+    min_silence_len = 700  # Minimum silence length in ms
+    silence_thresh = -40  # Silence threshold in dB
+    keep_silence = 200  # Keep some silence at the start and end of chunks
+    max_duration = 15000  # Max segment length in ms (5 seconds)
+
+    # Step 1: Split by silence
+    chunks = split_on_silence(
+        audio,
+        min_silence_len=min_silence_len,
+        silence_thresh=silence_thresh,
+        keep_silence=keep_silence,
+    )
+
+    # Step 2: Ensure no chunk is longer than max_duration
+    def split_long_chunks(chunks, max_duration):
+        final_chunks = []
+        for chunk in chunks:
+            while len(chunk) > max_duration:
+                final_chunks.append(
+                    chunk[:max_duration]
+                )  # Take the first part
+                chunk = chunk[max_duration:]  # Keep the remaining part
+            final_chunks.append(chunk)  # Add the last remaining part
+        return final_chunks
+
+    # Apply max length split
+    final_chunks = split_long_chunks(chunks, max_duration)
+
+    # Export each chunk
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    for i, chunk in enumerate(final_chunks):
+        chunk.export(f"{dir_path}/chunk_{i}.wav", format="wav")
+
+    print(f"Total {len(final_chunks)} chunks saved.")
+
+
+def test_split_librosa(audio_path, dir_path):
+    # Load the audio file
+    # audio_path = "audio.wav"
+    y, sr = librosa.load(audio_path, sr=None)  # Load with original sample rate
+
+    # Convert amplitude to decibels (dB)
+    y_db = librosa.amplitude_to_db(np.abs(y), ref=np.max)
+
+    # Set an absolute silence threshold (e.g., -40 dBFS)
+    absolute_silence_thresh = -40  # Silence if below this
+
+    # Mask silent regions (set them to 0)
+    y_filtered = np.where(y_db > absolute_silence_thresh, y, 0)
+
+    # Detect non-silent intervals
+    non_silent_intervals = librosa.effects.split(
+        y_filtered, top_db=10
+    )  # Works with modified signal
+
+    # Maximum segment length in seconds
+    max_duration = 15  # Max segment length in seconds
+    max_samples = int(max_duration * sr)  # Convert to samples
+
+    # Function to enforce max segment length
+    def split_long_segments(y, intervals, max_samples):
+        split_segments = []
+        for start, end in intervals:
+            if (end - start) > max_samples:
+                for i in range(start, end, max_samples):
+                    split_segments.append((i, min(i + max_samples, end)))
+            else:
+                split_segments.append((start, end))
+        return split_segments
+
+    # Apply max length split
+    final_intervals = split_long_segments(y, non_silent_intervals, max_samples)
+
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    # Save extracted audio segments
+    for i, (start, end) in enumerate(final_intervals):
+        print(start / sr, end / sr)
+        chunk = y[start:end]
+        soundfile.write(f"{dir_path}/chunk_{i}.wav", chunk, sr)
+
+    print(f"Total {len(final_intervals)} chunks saved.")
 
 
 if __name__ == "__main__":
@@ -742,18 +829,19 @@ if __name__ == "__main__":
 
     # test_slice(samples[2]["wav"], "clips")
     # test_trim_slice(samples[2]["wav"], "clips_trimmed")
-    # ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
-    # ma.split_space_note(remove_silence_threshold=0.3)
-    # ma.quantization(unit="32")
-    # ma.analysis(
-    #     track_bound=None,
-    #     track_list=None,
-    #     blind_note_info=True,
-    #     blind_lyric=False,
-    # )
+    ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
+    ma.split_space_note(remove_silence_threshold=0.3)
+    ma.quantization(unit="32")
+    ma.analysis(
+        track_bound=None,
+        track_list=None,
+        blind_note_info=True,
+        blind_lyric=False,
+    )
     # test_slice_midi(samples[2]["wav"], samples[2]["mid"])
     # test_clips_duration("clips_prev")
     # test_clips_duration("clips")
+    # test_split_librosa(samples[2]["wav"], "clips_librosa")
     # ma.slice()
     # ma.analysis(track_bound=30, track_list=["Melody"])
     # mid_path = "test_q2_midi.mid"
@@ -764,6 +852,7 @@ if __name__ == "__main__":
     # ma.analysis(track_bound=None, track_list=None, blind_note_info=True)
     # print(list(Note)[-1].value.beat, list(Note)[-1].value.beat / 2)
     # midia.midi2wav(ma.mid, "test.wav", 62)
+    # test_split_audio_pydub(samples[2]["wav"], "clips_pydub")
 
     # t1 = mido.MidiFile(mid_path).tracks[1]
     # t2 = mido.MidiFile(samples[2]["mid"]).tracks[1]

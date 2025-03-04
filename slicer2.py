@@ -44,6 +44,7 @@ class Slicer:
         sr: int,
         threshold: float = -40.0,
         min_length: int = 5000,
+        max_length: int = 1500,
         min_interval: int = 300,
         hop_size: int = 20,
         max_sil_kept: int = 5000,
@@ -61,12 +62,18 @@ class Slicer:
         self.hop_size = round(sr * hop_size / 1000)
         self.win_size = min(round(min_interval), 4 * self.hop_size)
         self.min_length = round(sr * min_length / 1000 / self.hop_size)
+        self.max_length = max_length
         self.min_interval = round(min_interval / self.hop_size)
         self.max_sil_kept = round(sr * max_sil_kept / 1000 / self.hop_size)
         self.chunks_time = []
 
     def _apply_slice(self, waveform, begin, end):
-        self.chunks_time.append((begin.item(), end.item()))
+        if not isinstance(end, int):
+            end = end.item()
+        if not isinstance(begin, int):
+            begin = begin.item()
+        self.chunks_time.append((begin, end))
+        # self.chunks_time.append((begin.item(), end.item()))
         if len(waveform.shape) > 1:
             return waveform[
                 :,
@@ -184,18 +191,46 @@ class Slicer:
         else:
             chunks = []
             if sil_tags[0][0] > 0:
-                chunks.append(self._apply_slice(waveform, 0, sil_tags[0][0]))
+                # print("A", 0, sil_tags[0][0], sil_tags[0][0] / 100)
+                # chunks.append(self._apply_slice(waveform, 0, sil_tags[0][0]))
+                chunks += self._max_sliced_chunks(waveform, 0, sil_tags[0][0])
             for i in range(len(sil_tags) - 1):
-                chunks.append(
-                    self._apply_slice(
-                        waveform, sil_tags[i][1], sil_tags[i + 1][0]
-                    )
+                # print(
+                #     "B",
+                #     sil_tags[i][1],
+                #     sil_tags[i + 1][0],
+                #     (sil_tags[i + 1][0] - sil_tags[i][1]) / 100,
+                # )
+                # chunks.append(
+                #     self._apply_slice(
+                #         waveform, sil_tags[i][1], sil_tags[i + 1][0]
+                #     )
+                # )
+                chunks += self._max_sliced_chunks(
+                    waveform, sil_tags[i][1], sil_tags[i + 1][0]
                 )
             if sil_tags[-1][1] < total_frames:
-                chunks.append(
-                    self._apply_slice(waveform, sil_tags[-1][1], total_frames)
+                # print(
+                #     "C",
+                #     sil_tags[-1][1],
+                #     total_frames,
+                #     (total_frames - sil_tags[-1][1]) / 100,
+                # )
+                # chunks.append(
+                #     self._apply_slice(waveform, sil_tags[-1][1], total_frames)
+                # )
+                chunks += self._max_sliced_chunks(
+                    waveform, sil_tags[-1][1], total_frames
                 )
             return chunks
+
+    def _max_sliced_chunks(self, waveform, begin, end):
+        chunks = []
+        for i in range(begin, end, self.max_length):
+            chunks.append(
+                self._apply_slice(waveform, i, min(i + self.max_length, end))
+            )
+        return chunks
 
 
 def main():
