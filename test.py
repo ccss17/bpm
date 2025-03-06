@@ -879,8 +879,10 @@ if __name__ == "__main__":
     # test_trim_slice(samples[2]["wav"], "clips_trimmed")
     # mid_path = "d:/dataset/004.다화자 가창 데이터/01.데이터/1.Training/라벨링데이터/01.발라드R&B/B. 여성/01. 20대/가창자_s01/ba_06799_+0_a_s01_f_02.mid"
     # mid_path = "d:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/02.록팝/A. 남성/01. 20대/가창자_s02/ro_01274_+0_a_s02_m_02.mid"
-    # ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
+    # mid_path = "D:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/02.록팝/A. 남성/03. 40대 이상/가창자_s18/ro_03036_+0_s_s18_m_04.mid"
+    mid_path = "D:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/01.발라드R&B/B. 여성/01. 20대/가창자_s01/ba_00118_+0_a_s01_f_02.mid"
     ma = midia.MidiAnalyzer(samples[3]["mid"], convert_1_to_0=True)
+    ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
     ma.split_space_note(remove_silence_threshold=0.3)
     ma.quantization(unit="32")
     ma.analysis(
@@ -1007,6 +1009,32 @@ if __name__ == "__main__":
     # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
     # rprint(data_path)
     # bpmlib.statistics_estimated_bpm_error(data_path)
+
+    # idx = 0
+    # data_path = pathlib.Path("d:/dataset/json")
+    # for i, json_path in enumerate(
+    #     sorted(data_path.rglob("*.json"), key=lambda x: x.stem)
+    # ):
+    #     if i == idx:
+    #         print(json_path)
+    #         midia.test_json(json_path)
+    #         break
+    # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    # for i, mid_path in enumerate(
+    #     sorted(data_path.rglob("*.mid"), key=lambda x: x.stem)
+    # ):
+    #     if i == idx:
+    #         print(mid_path)
+    #         ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
+    #         ma.split_space_note(remove_silence_threshold=0.3)
+    #         ma.quantization(unit="32")
+    #         ma.analysis(
+    #             track_bound=None,
+    #             track_list=None,
+    #             blind_note_info=True,
+    #             blind_lyric=False,
+    #         )
+    #         break
 
     # sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
     # for p1, p2 in zip(

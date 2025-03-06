@@ -147,7 +147,8 @@ def statistics_estimated_bpm_error(path_obj, sample_num=None):
 
     with mp.Pool(mp.cpu_count()) as p:
         samples = zip(
-            sorted(path_obj.rglob("*.wav")), sorted(path_obj.rglob("*.mid"))
+            sorted(path_obj.rglob("*.wav"), key=lambda x: x.stem),
+            sorted(path_obj.rglob("*.mid"), key=lambda x: x.stem),
         )
         if sample_num:
             samples = list(samples)
