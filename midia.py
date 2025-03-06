@@ -3,6 +3,9 @@
 import sys
 from collections import defaultdict
 import string
+import json
+from pathlib import Path
+import os
 
 import pretty_midi
 import numpy as np
@@ -145,6 +148,14 @@ class MidiAnalyzer:
         if self.mid.type == 1 and not self.convert_1_to_0:
             raise RuntimeError
         return self.track_analyzers[0].slice(begin, end)
+
+    def to_json(self, dir_path=None):
+        """to_json"""
+        if self.mid.type == 1 and not self.convert_1_to_0:
+            raise RuntimeError
+        return self.track_analyzers[0].to_json(
+            file_path=self.mid.filename, dir_path=dir_path
+        )
 
     def analysis(
         self,
@@ -371,6 +382,7 @@ class MidiTrackAnalyzer:
                     )
                     if time > remove_silence_threshold:
                         modified_track += [
+                            Message("note_on", time=0),
                             MetaMessage("lyrics", text=" "),
                             Message("note_off", time=msg.time),
                         ]
@@ -395,6 +407,83 @@ class MidiTrackAnalyzer:
         )
         info = f"[bold {color}]Total item num of BPM({bpm}): " + f"{note_num}"
         Console().rule(info, style=f"{color}")
+
+    def to_json(self, file_path, dir_path=None):
+        """to_json"""
+        self._init_values()
+        total_time = 0
+        lyric = ""
+        data = {"notes": []}
+        note_data = {
+            "start_time": None,
+            "end_time": None,
+            "length": None,
+            "pitch": None,
+            "lyric": None,
+        }
+        duration = 0
+        for i, msg in enumerate(self.track):
+            total_time += msg.time
+            duration += msg.time
+            self.length += md.tick2second(
+                msg.time,
+                ticks_per_beat=self.ppqn,
+                tempo=self.tempo,
+            )
+            msg_kwarg = {
+                "msg": msg,
+                "ppqn": self.ppqn,
+                "tempo": self.tempo,
+                "idx": i,
+                "length": self.length,
+            }
+            match msg.type:
+                case "note_on":
+                    note_on_time = self.length
+                    duration = 0
+                case "note_off":
+                    _note_data = note_data.copy()
+                    _note_data["start_time"] = note_on_time
+                    _note_data["end_time"] = self.length
+                    _note_data["length"] = md.tick2second(
+                        duration,
+                        ticks_per_beat=self.ppqn,
+                        tempo=self.tempo,
+                    )
+                    _note_data["pitch"] = msg.note
+                    if not lyric:
+                        raise ValueError
+                    _note_data["lyric"] = lyric
+                    if None in _note_data.values():
+                        raise ValueError
+                    data["notes"].append(_note_data)
+                case "lyrics":
+                    mmal = MidiMessageAnalyzer_lyrics(
+                        **msg_kwarg,
+                        encoding=self.encoding,
+                    )
+                    if self.encoding != mmal.encoding:
+                        self.encoding = mmal.encoding
+                    _, lyric = mmal.analysis()
+                case "set_tempo":
+                    _, self.tempo = MidiMessageAnalyzer_set_tempo(
+                        **msg_kwarg,
+                        time_signature=self.time_signature,
+                    ).analysis()
+                case "time_signature":
+                    _, self.time_signature = (
+                        MidiMessageAnalyzer_time_signature(
+                            **msg_kwarg
+                        ).analysis()
+                    )
+        if dir_path is None:
+            dir_path = Path("")
+        else:
+            dir_path = Path(dir_path)
+            dir_path.mkdir(exist_ok=True, parents=True)
+        file_path = dir_path / Path(file_path).with_suffix(".json").name
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
 
     def analysis(
         self,
@@ -800,7 +889,7 @@ class MidiMessageAnalyzer_SoundUnit(MidiMessageAnalyzer):
 
     def note_info(self, note):
         """note_info"""
-        return f"{pretty_midi.note_number_to_name(note):>3}({note})"
+        return f"{pretty_midi.note_number_to_name(note):>3}({note:2})"
 
 
 class MidiMessageAnalyzer_note_on(MidiMessageAnalyzer_SoundUnit):

@@ -766,6 +766,54 @@ def test_split_librosa(audio_path, dir_path):
     print(f"Total {len(final_intervals)} chunks saved.")
 
 
+def _conversion_gv_to_json(midi_path):
+    ma = midia.MidiAnalyzer(midi_path, convert_1_to_0=True)
+    ma.split_space_note(remove_silence_threshold=0.3)
+    ma.quantization(unit="32")
+    dir_path = "d:/dataset/json"
+    ma.to_json(dir_path=dir_path)
+
+
+def conversion_gv_to_json():
+    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    with mp.Pool(mp.cpu_count()) as p:
+        samples = list(data_path.rglob("*.mid"))
+        p.map(_conversion_gv_to_json, samples)
+
+
+def verify_json_wav():
+    sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
+    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    json_path = pathlib.Path("d:/dataset/json")
+    wav_set = list(sorted(data_path.rglob("*.wav"), key=lambda x: x.stem))
+    json_set = list(sorted(json_path.rglob("*.json"), key=lambda x: x.stem))
+    for i, (wav, json) in enumerate(zip(wav_set, json_set)):
+        if wav.stem != json.stem:
+            print(i, wav.name, json.name)
+        # print(i, wav.name, json.name)
+    print(len(wav_set), len(json_set))
+    print(len(set(wav_set)), len(set(json_set)))
+
+    # for i, (wav, mid) in enumerate(
+    #     zip(
+    #         sorted(data_path.rglob("*.wav"), key=lambda x: x.stem),
+    #         sorted(data_path.rglob("*.mid"), key=lambda x: x.stem),
+    #     )
+    # ):
+    #     if wav.stem != mid.stem:
+    #         print(i, wav)
+    #         print(i, mid)
+    #         print()
+    # for i, (wav, mid) in enumerate(
+    #     zip(
+    #         sorted(data_path.rglob("*.wav"), key=lambda x: x.stem),
+    #         sorted(data_path.rglob("*.mid"), key=lambda x: x.stem),
+    #     )
+    # ):
+    #     if wav.stem != mid.stem:
+    #         print(i, wav.stem, mid.stem)
+
+
 if __name__ == "__main__":
     samples = [
         {
@@ -829,7 +877,10 @@ if __name__ == "__main__":
 
     # test_slice(samples[2]["wav"], "clips")
     # test_trim_slice(samples[2]["wav"], "clips_trimmed")
-    ma = midia.MidiAnalyzer(samples[2]["mid"], convert_1_to_0=True)
+    # mid_path = "d:/dataset/004.다화자 가창 데이터/01.데이터/1.Training/라벨링데이터/01.발라드R&B/B. 여성/01. 20대/가창자_s01/ba_06799_+0_a_s01_f_02.mid"
+    # mid_path = "d:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/02.록팝/A. 남성/01. 20대/가창자_s02/ro_01274_+0_a_s02_m_02.mid"
+    # ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
+    ma = midia.MidiAnalyzer(samples[3]["mid"], convert_1_to_0=True)
     ma.split_space_note(remove_silence_threshold=0.3)
     ma.quantization(unit="32")
     ma.analysis(
@@ -838,6 +889,9 @@ if __name__ == "__main__":
         blind_note_info=True,
         blind_lyric=False,
     )
+    # ma.to_json(dir_path="json")
+    # conversion_gv_to_json()
+    # verify_json_wav()
     # test_slice_midi(samples[2]["wav"], samples[2]["mid"])
     # test_clips_duration("clips_prev")
     # test_clips_duration("clips")
