@@ -1,11 +1,13 @@
 """Module for test code"""
 
 import pathlib
+from pathlib import Path
 import sys
 import multiprocessing as mp
 import pathlib
 import random
 import os
+import json
 
 import numpy as np
 import librosa
@@ -767,17 +769,23 @@ def test_split_librosa(audio_path, dir_path):
 
 
 def _conversion_gv_to_json(midi_path):
+    dir_path = "d:/dataset/json"
+    dir_path = "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
+    if os.path.exists(pathlib.Path(dir_path) / midi_path.name):
+        return
     ma = midia.MidiAnalyzer(midi_path, convert_1_to_0=True)
     ma.split_space_note(remove_silence_threshold=0.3)
     ma.quantization(unit="32")
-    dir_path = "d:/dataset/json"
     ma.to_json(dir_path=dir_path)
 
 
 def conversion_gv_to_json():
     data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    data_path = pathlib.Path(
+        "C:/Users/chans/repo/dataset/004.다화자 가창 데이터"
+    )
     with mp.Pool(mp.cpu_count()) as p:
-        samples = list(data_path.rglob("*.mid"))
+        samples = data_path.rglob("*.mid")
         p.map(_conversion_gv_to_json, samples)
 
 
@@ -785,6 +793,12 @@ def verify_json_wav():
     sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
     data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
     json_path = pathlib.Path("d:/dataset/json")
+    data_path = pathlib.Path(
+        "C:/Users/chans/repo/dataset/004.다화자 가창 데이터"
+    )
+    json_path = pathlib.Path(
+        "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
+    )
     wav_set = list(sorted(data_path.rglob("*.wav"), key=lambda x: x.stem))
     json_set = list(sorted(json_path.rglob("*.json"), key=lambda x: x.stem))
     for i, (wav, json) in enumerate(zip(wav_set, json_set)):
@@ -812,6 +826,97 @@ def verify_json_wav():
     # ):
     #     if wav.stem != mid.stem:
     #         print(i, wav.stem, mid.stem)
+
+
+def _save_splitted_json(json_path):
+    dir_path = pathlib.Path(
+        "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
+    )
+    chunks = midia.split_json_by_slience(json_path)
+    if dir_path is None:
+        dir_path = Path("")
+    else:
+        dir_path = Path(dir_path)
+        dir_path.mkdir(exist_ok=True, parents=True)
+    file_path = dir_path / json_path.name
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(chunks, f, indent=4, ensure_ascii=False)
+
+
+def save_splitted_json():
+    json_path = pathlib.Path("d:/dataset/json")
+    json_path = pathlib.Path(
+        "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
+    )
+    # dir_path = pathlib.Path(
+    #     "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
+    # )
+    # for json_path in json_path.rglob("*.json"):
+    #     chunks = midia.split_json_by_slience(json_path)
+    #     if dir_path is None:
+    #         dir_path = Path("")
+    #     else:
+    #         dir_path = Path(dir_path)
+    #         dir_path.mkdir(exist_ok=True, parents=True)
+    #     file_path = dir_path / json_path.name
+    #     with open(file_path, "w", encoding="utf-8") as f:
+    #         json.dump(chunks, f, indent=4, ensure_ascii=False)
+    with mp.Pool(mp.cpu_count()) as p:
+        samples = json_path.rglob("*.json")
+        p.map(_save_splitted_json, samples)
+
+
+def split_audio():
+    audio_path = pathlib.Path(
+        "C:/Users/chans/repo/dataset/004.다화자 가창 데이터"
+    )
+    json_path = pathlib.Path(
+        "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
+    )
+    samples = zip(
+        sorted(audio_path.rglob("*.wav"), key=lambda x: x.stem),
+        sorted(json_path.rglob("*.json"), key=lambda x: x.stem),
+    )
+    mids = list(sorted(audio_path.rglob("*.mid"), key=lambda x: x.stem))
+
+    def _split_audio(y, sr, start_time, end_time, output_filename):
+        start_sample = int(start_time * sr)  # Convert time to sample index
+        end_sample = int(end_time * sr)
+
+        chunk = y[start_sample:end_sample]  # Extract the segment
+        soundfile.write(output_filename, chunk, sr)  # Save as WAV file
+
+    for wav_path, json_path in samples:
+        if wav_path.stem != json_path.stem:
+            print(wav_path, json_path)
+        with open(json_path, "r", encoding="utf-8") as f:
+            json_data = json.load(f)
+        # rprint(json_data)
+        y, sr = librosa.load(wav_path, sr=None)
+        output_dir_path = "clips_json"
+        if not os.path.exists(output_dir_path):
+            os.makedirs(output_dir_path)
+        # for i, chunk in enumerate(json_data):
+        #     _split_audio(
+        #         y,
+        #         sr,
+        #         start_time=chunk["chunk_info"]["start_time"],
+        #         end_time=chunk["chunk_info"]["end_time"],
+        #         output_filename=f"{output_dir_path}/{i}.wav",
+        #     )
+        break
+
+    ma = midia.MidiAnalyzer(mids[0], convert_1_to_0=True)
+    ma.split_space_note(remove_silence_threshold=0.3)
+    # ma.quantization(unit="32")
+    ma.analysis(
+        track_bound=None,
+        track_list=None,
+        blind_note_info=True,
+        blind_lyric=False,
+    )
+    print(wav_path)
+    print(json_path)
 
 
 if __name__ == "__main__":
@@ -880,17 +985,17 @@ if __name__ == "__main__":
     # mid_path = "d:/dataset/004.다화자 가창 데이터/01.데이터/1.Training/라벨링데이터/01.발라드R&B/B. 여성/01. 20대/가창자_s01/ba_06799_+0_a_s01_f_02.mid"
     # mid_path = "d:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/02.록팝/A. 남성/01. 20대/가창자_s02/ro_01274_+0_a_s02_m_02.mid"
     # mid_path = "D:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/02.록팝/A. 남성/03. 40대 이상/가창자_s18/ro_03036_+0_s_s18_m_04.mid"
-    mid_path = "D:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/01.발라드R&B/B. 여성/01. 20대/가창자_s01/ba_00118_+0_a_s01_f_02.mid"
-    ma = midia.MidiAnalyzer(samples[3]["mid"], convert_1_to_0=True)
-    ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
-    ma.split_space_note(remove_silence_threshold=0.3)
-    ma.quantization(unit="32")
-    ma.analysis(
-        track_bound=None,
-        track_list=None,
-        blind_note_info=True,
-        blind_lyric=False,
-    )
+    # mid_path = "D:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/01.발라드R&B/B. 여성/01. 20대/가창자_s01/ba_00118_+0_a_s01_f_02.mid"
+    # ma = midia.MidiAnalyzer(samples[3]["mid"], convert_1_to_0=True)
+    # ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
+    # ma.split_space_note(remove_silence_threshold=0.3)
+    # ma.quantization(unit="32")
+    # ma.analysis(
+    #     track_bound=None,
+    #     track_list=None,
+    #     blind_note_info=True,
+    #     blind_lyric=False,
+    # )
     # ma.to_json(dir_path="json")
     # conversion_gv_to_json()
     # verify_json_wav()
@@ -1011,17 +1116,28 @@ if __name__ == "__main__":
     # bpmlib.statistics_estimated_bpm_error(data_path)
 
     # idx = 0
-    # data_path = pathlib.Path("d:/dataset/json")
+    # json_path = pathlib.Path("d:/dataset/json")
+    # json_path = pathlib.Path(
+    #     "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
+    # )
+    # mid_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    # mid_path = pathlib.Path(
+    #     "C:/Users/chans/repo/dataset/004.다화자 가창 데이터"
+    # )
     # for i, json_path in enumerate(
-    #     sorted(data_path.rglob("*.json"), key=lambda x: x.stem)
+    #     sorted(json_path.rglob("*.json"), key=lambda x: x.stem)
     # ):
     #     if i == idx:
+    #         chunks = midia.split_json_by_slience(json_path)
+    #         rprint(chunks)
     #         print(json_path)
-    #         midia.test_json(json_path)
     #         break
-    # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+
+    # save_splitted_json()
+    split_audio()
+
     # for i, mid_path in enumerate(
-    #     sorted(data_path.rglob("*.mid"), key=lambda x: x.stem)
+    #     sorted(mid_path.rglob("*.mid"), key=lambda x: x.stem)
     # ):
     #     if i == idx:
     #         print(mid_path)
@@ -1043,48 +1159,3 @@ if __name__ == "__main__":
     #     print(p1)
     #     print(p2)
     #     print()
-    #
-    # Output:
-    #
-    # d:\dataset\177.다음색 가이드보컬 데이터
-    # error(0); mean/std: 42.13, 35.27
-    # error(2); mean/std:  4.39,  7.71
-    # error(4); mean/std:  4.08,  6.77
-    # error(8); mean/std:  4.08,  6.77
-    # selected error:
-    #   error(/8): 0
-    #   error(/4): 41
-    #   error(/2): 1998
-    #   error(0) : 1541
-    #   error(*2): 29
-    #   error(*4): 0
-    #   error(*8): 0
-    # d:\dataset\004.다화자 가창 데이터
-    # error(0); mean/std: 38.97, 36.49
-    # error(2); mean/std:  6.16,  8.72
-    # error(4); mean/std:  5.91,  8.17
-    # error(8); mean/std:  5.91,  8.17
-    # selected error:
-    #   error(/8): 0
-    #   error(/4): 78
-    #   error(/2): 1993
-    #   error(0) : 2078
-    #   error(*2): 77
-    #   error(*4): 0
-    #   error(*8): 0
-
-    #
-    # bpm error samples
-    #
-    # underestimated bpm(/2) sample:
-    #   SINGER_14_10TO29_NORMAL_FEMALE_DANCE_C0555.wav
-    #   [estimated bpm]=78.30, [bpm from midi file]=120.0
-    # underestimated bpm(/2) sample:
-    #   ba_05206_+0_a_s14_f_03.wav
-    #   [estimated bpm]=95.70, [bpm from midi file]=203.98
-    # overestimated bpm(*2) sample:
-    #   SINGER_12_10TO29_CLEAR_FEMALE_DANCE_C0477.wav
-    #   [estimated bpm]=215.33, [bpm from midi file]=120.0
-    # overestimated bpm(*2) sample:
-    #   ba_06573_-1_a_s09_m_03.wav
-    #   [estimated bpm]=112.34, [bpm from midi file]=63.23

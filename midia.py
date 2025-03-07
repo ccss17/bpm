@@ -372,9 +372,11 @@ class MidiTrackAnalyzer:
         """split_space_note"""
         modified_track = []
         error = 0
+        note_in = False
         for msg in self.track:
             match msg.type:
                 case "note_on":
+                    note_in = True
                     time = md.tick2second(
                         msg.time,
                         ticks_per_beat=self.ppqn,
@@ -387,14 +389,46 @@ class MidiTrackAnalyzer:
                             Message("note_off", time=msg.time),
                         ]
                     else:  # just remove time
-                        error = msg.time
+                        error += time
                     msg.time = 0
                 case "note_off":
+                    note_in = False
                     if error:
-                        msg.time += error
+                        msg.time += md.second2tick(
+                            error, ticks_per_beat=self.ppqn, tempo=self.tempo
+                        )
                         error = 0
                 case "set_tempo":
+                    time = md.tick2second(
+                        msg.time,
+                        ticks_per_beat=self.ppqn,
+                        tempo=self.tempo,
+                    )
+                    if not note_in and time > remove_silence_threshold:
+                        modified_track += [
+                            Message("note_on", time=0),
+                            MetaMessage("lyrics", text=" "),
+                            Message("note_off", time=msg.time),
+                        ]
+                    else:
+                        error += time
+                    msg.time = 0
                     self.tempo = msg.tempo
+                case _:
+                    time = md.tick2second(
+                        msg.time,
+                        ticks_per_beat=self.ppqn,
+                        tempo=self.tempo,
+                    )
+                    if not note_in and time > remove_silence_threshold:
+                        modified_track += [
+                            Message("note_on", time=0),
+                            MetaMessage("lyrics", text=" "),
+                            Message("note_off", time=msg.time),
+                        ]
+                    else:
+                        error += time
+                    msg.time = 0
             modified_track.append(msg)
         self.track = modified_track
         return self.track
@@ -1082,7 +1116,24 @@ class MidiMessageAnalyzer_lyrics(
         return result, self.lyric
 
 
-def test_json(json_path):
+def split_json_by_slience(json_path):
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
-    rprint(data)
+    result = []
+    chunk = []
+    for note in data["notes"][1:-1]:
+        if note["lyric"] == " " and chunk:
+            result.append(
+                {
+                    "chunk_info": {
+                        "start_time": chunk[0]["start_time"],
+                        "end_time": chunk[-1]["end_time"],
+                        "length": sum(item["length"] for item in chunk),
+                    },
+                    "chunk": chunk,
+                }
+            )
+            chunk = []
+        else:
+            chunk.append(note)
+    return result
