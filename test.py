@@ -769,8 +769,8 @@ def test_split_librosa(audio_path, dir_path):
 
 
 def _conversion_gv_to_json(midi_path):
-    dir_path = "d:/dataset/json"
     dir_path = "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
+    dir_path = "d:/dataset/다화자 가창 데이터 json"
     if os.path.exists(pathlib.Path(dir_path) / midi_path.name):
         return
     ma = midia.MidiAnalyzer(midi_path, convert_1_to_0=True)
@@ -780,10 +780,10 @@ def _conversion_gv_to_json(midi_path):
 
 
 def conversion_gv_to_json():
-    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
     data_path = pathlib.Path(
         "C:/Users/chans/repo/dataset/004.다화자 가창 데이터"
     )
+    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
     with mp.Pool(mp.cpu_count()) as p:
         samples = data_path.rglob("*.mid")
         p.map(_conversion_gv_to_json, samples)
@@ -791,14 +791,15 @@ def conversion_gv_to_json():
 
 def verify_json_wav():
     sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
-    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
-    json_path = pathlib.Path("d:/dataset/json")
     data_path = pathlib.Path(
         "C:/Users/chans/repo/dataset/004.다화자 가창 데이터"
     )
     json_path = pathlib.Path(
         "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
     )
+    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    json_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json")
+    json_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json_splitted")
     wav_set = list(sorted(data_path.rglob("*.wav"), key=lambda x: x.stem))
     json_set = list(sorted(json_path.rglob("*.json"), key=lambda x: x.stem))
     for i, (wav, json) in enumerate(zip(wav_set, json_set)):
@@ -832,6 +833,7 @@ def _save_splitted_json(json_path):
     dir_path = pathlib.Path(
         "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
     )
+    dir_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json_splitted")
     chunks = midia.split_json_by_slience(json_path)
     if dir_path is None:
         dir_path = Path("")
@@ -844,13 +846,13 @@ def _save_splitted_json(json_path):
 
 
 def save_splitted_json():
-    json_path = pathlib.Path("d:/dataset/json")
     json_path = pathlib.Path(
         "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
     )
-    # dir_path = pathlib.Path(
-    #     "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
-    # )
+    json_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json")
+    dir_path = pathlib.Path(
+        "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
+    )
     # for json_path in json_path.rglob("*.json"):
     #     chunks = midia.split_json_by_slience(json_path)
     #     if dir_path is None:
@@ -873,6 +875,8 @@ def split_audio():
     json_path = pathlib.Path(
         "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
     )
+    audio_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    json_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json_splitted")
     samples = zip(
         sorted(audio_path.rglob("*.wav"), key=lambda x: x.stem),
         sorted(json_path.rglob("*.json"), key=lambda x: x.stem),
@@ -908,7 +912,7 @@ def split_audio():
 
     ma = midia.MidiAnalyzer(mids[0], convert_1_to_0=True)
     ma.split_space_note(remove_silence_threshold=0.3)
-    # ma.quantization(unit="32")
+    ma.quantization(unit="32")
     ma.analysis(
         track_bound=None,
         track_list=None,

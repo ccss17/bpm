@@ -1116,13 +1116,14 @@ class MidiMessageAnalyzer_lyrics(
         return result, self.lyric
 
 
-def split_json_by_slience(json_path):
+def split_json_by_slience(json_path, min_length=6):
     with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     result = []
     chunk = []
+    chunk_length = 0
     for note in data["notes"][1:-1]:
-        if note["lyric"] == " " and chunk:
+        if note["lyric"] == " " and chunk_length > min_length:
             result.append(
                 {
                     "chunk_info": {
@@ -1134,6 +1135,8 @@ def split_json_by_slience(json_path):
                 }
             )
             chunk = []
+            chunk_length = 0
         else:
             chunk.append(note)
+            chunk_length += note["length"]
     return result
