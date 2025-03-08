@@ -923,6 +923,94 @@ def split_audio():
     print(json_path)
 
 
+def preprocess_dataset(data_path, json_path, output_dir_path, sample_num=None):
+    def _split_audio(y, sr, start_time, end_time, output_filename):
+        start_sample = int(start_time * sr)  # Convert time to sample index
+        end_sample = int(end_time * sr)
+
+        chunk = y[start_sample:end_sample]  # Extract the segment
+        soundfile.write(output_filename, chunk, sr)  # Save as WAV file
+
+    wav_set = sorted(
+        pathlib.Path(data_path).rglob("*.wav"), key=lambda x: x.stem
+    )
+    json_set = sorted(
+        pathlib.Path(json_path).rglob("*.json"), key=lambda x: x.stem
+    )
+
+    dir_path = Path(output_dir_path)
+    dir_path.mkdir(exist_ok=True, parents=True)
+
+    pitch_dir_path = f"{output_dir_path}/note_pitch"
+    pitch_dir_path = Path(pitch_dir_path)
+    pitch_dir_path.mkdir(exist_ok=True, parents=True)
+
+    duration_dir_path = f"{output_dir_path}/note_duration"
+    duration_dir_path = Path(duration_dir_path)
+    duration_dir_path.mkdir(exist_ok=True, parents=True)
+
+    clips_dir_path = f"{output_dir_path}/audio"
+    clips_dir_path = Path(clips_dir_path)
+    clips_dir_path.mkdir(exist_ok=True, parents=True)
+
+    g2p = G2p()
+    for wav_path, json_path in zip(wav_set, json_set):
+        if wav_path.stem != json_path.stem:
+            raise ValueError
+        filename = wav_path.stem
+        with open(json_path, "r", encoding="utf-8") as f:
+            json_data = json.load(f)
+
+        for i, chunk in enumerate(json_data):
+            lyric = "".join([item["lyric"] for item in chunk["chunk"]])
+            lyric = " ".join([g2p(x) for x in lyric.split()])
+            with open(
+                f"{output_dir_path}/metadata.txt", "a", encoding="utf-8"
+            ) as f:
+                f.write(f"{filename}_{i}|{lyric}|27|28|SV\n")
+
+        for i, chunk in enumerate(json_data):
+            np.save(
+                f"{pitch_dir_path}/{filename}_{i}.npy",
+                np.array([item["pitch"] for item in chunk["chunk"]]),
+            )
+
+        sampling_rate = 22050
+        hop_length = 256
+        for i, chunk in enumerate(json_data):
+            note_duration_frame = midia.duration_secs_to_frames(
+                np.array([item["length"] for item in chunk["chunk"]]),
+                sampling_rate,
+                hop_length,
+            )
+            np.save(
+                f"{duration_dir_path}/{filename}_{i}.npy", note_duration_frame
+            )
+
+        y, sr = librosa.load(wav_path, sr=None)
+        for i, chunk in enumerate(json_data):
+            _split_audio(
+                y,
+                sr,
+                start_time=chunk["chunk_info"]["start_time"],
+                end_time=chunk["chunk_info"]["end_time"],
+                output_filename=f"{clips_dir_path}/{filename}_{i}.wav",
+            )
+
+        break
+
+    # with mp.Pool(mp.cpu_count()) as p:
+    #     samples = zip(
+    #         sorted(data_path_obj.rglob("*.wav"), key=lambda x: x.stem),
+    #         sorted(json_path_obj.rglob("*.json"), key=lambda x: x.stem),
+    #     )
+    #     if sample_num:
+    #         samples = list(samples)
+    #         if sample_num < len(samples):
+    #             samples = random.sample(samples, k=sample_num)
+    # error_array = np.array(p.starmap(estimated_bpm_error, samples))
+
+
 if __name__ == "__main__":
     samples = [
         {
@@ -1138,7 +1226,7 @@ if __name__ == "__main__":
     #         break
 
     # save_splitted_json()
-    split_audio()
+    # split_audio()
 
     # for i, mid_path in enumerate(
     #     sorted(mid_path.rglob("*.mid"), key=lambda x: x.stem)
@@ -1163,3 +1251,8 @@ if __name__ == "__main__":
     #     print(p1)
     #     print(p2)
     #     print()
+
+    data_path = "d:/dataset/004.다화자 가창 데이터"
+    json_path = "d:/dataset/다화자 가창 데이터 json_splitted"
+    output_dir_path = "test_result"
+    preprocess_dataset(data_path, json_path, output_dir_path)
