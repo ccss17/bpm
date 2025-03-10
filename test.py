@@ -989,7 +989,7 @@ def preprocess_dataset(
     duration_dir_path = Path(duration_dir_path)
     duration_dir_path.mkdir(exist_ok=True, parents=True)
 
-    clips_dir_path = f"{output_dir_path}/audio"
+    clips_dir_path = f"{output_dir_path}/wav"
     clips_dir_path = Path(clips_dir_path)
     clips_dir_path.mkdir(exist_ok=True, parents=True)
 
