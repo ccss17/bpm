@@ -1122,7 +1122,16 @@ def split_json_by_slience(json_path, min_length=6):
     result = []
     chunk = []
     chunk_length = 0
-    for note in data["notes"][1:-1]:
+    start_data = False
+    for note in data["notes"]:
+        if note["lyric"] == "J":
+            start_data = True
+            continue
+        if note["lyric"] == "H":
+            break
+        if not start_data:
+            continue
+
         if note["lyric"] == " " and chunk_length > min_length:
             result.append(
                 {

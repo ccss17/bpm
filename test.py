@@ -8,6 +8,7 @@ import pathlib
 import random
 import os
 import json
+import re
 
 import numpy as np
 import librosa
@@ -768,9 +769,9 @@ def test_split_librosa(audio_path, dir_path):
     print(f"Total {len(final_intervals)} chunks saved.")
 
 
-def _conversion_gv_to_json(midi_path):
-    dir_path = "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
-    dir_path = "d:/dataset/다화자 가창 데이터 json"
+def _conversion_gv_to_json(midi_path, dir_path):
+    # dir_path = "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
+    # dir_path = "d:/dataset/다화자 가창 데이터 json"
     if os.path.exists(pathlib.Path(dir_path) / midi_path.name):
         return
     ma = midia.MidiAnalyzer(midi_path, convert_1_to_0=True)
@@ -779,93 +780,71 @@ def _conversion_gv_to_json(midi_path):
     ma.to_json(dir_path=dir_path)
 
 
-def conversion_gv_to_json():
-    data_path = pathlib.Path(
-        "C:/Users/chans/repo/dataset/004.다화자 가창 데이터"
-    )
-    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+def conversion_gv_to_json(data_path, json_path):
+    # data_path = pathlib.Path(
+    #     "C:/Users/chans/repo/dataset/004.다화자 가창 데이터"
+    # )
+    # data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
+    # json_path = "d:/dataset/다화자 가창 데이터 json"
+    data_path = pathlib.Path(data_path)
     with mp.Pool(mp.cpu_count()) as p:
         samples = data_path.rglob("*.mid")
-        p.map(_conversion_gv_to_json, samples)
+        args = zip(samples, (json_path for _ in range(len(samples))))
+        p.starmap(_conversion_gv_to_json, args)
 
 
-def verify_json_wav():
+def verify_json_wav(data_path, json_path):
     sys.stdout.reconfigure(encoding="utf-8")  # printing encoding
-    data_path = pathlib.Path(
-        "C:/Users/chans/repo/dataset/004.다화자 가창 데이터"
-    )
-    json_path = pathlib.Path(
-        "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
-    )
-    data_path = pathlib.Path("d:/dataset/004.다화자 가창 데이터")
-    json_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json")
-    json_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json_splitted")
+    data_path = pathlib.Path(data_path)
+    json_path = pathlib.Path(json_path)
+
     wav_set = list(sorted(data_path.rglob("*.wav"), key=lambda x: x.stem))
     json_set = list(sorted(json_path.rglob("*.json"), key=lambda x: x.stem))
-    for i, (wav, json) in enumerate(zip(wav_set, json_set)):
-        if wav.stem != json.stem:
-            print(i, wav.name, json.name)
-        # print(i, wav.name, json.name)
-    print(len(wav_set), len(json_set))
-    print(len(set(wav_set)), len(set(json_set)))
-
-    # for i, (wav, mid) in enumerate(
-    #     zip(
-    #         sorted(data_path.rglob("*.wav"), key=lambda x: x.stem),
-    #         sorted(data_path.rglob("*.mid"), key=lambda x: x.stem),
-    #     )
-    # ):
-    #     if wav.stem != mid.stem:
-    #         print(i, wav)
-    #         print(i, mid)
-    #         print()
-    # for i, (wav, mid) in enumerate(
-    #     zip(
-    #         sorted(data_path.rglob("*.wav"), key=lambda x: x.stem),
-    #         sorted(data_path.rglob("*.mid"), key=lambda x: x.stem),
-    #     )
-    # ):
-    #     if wav.stem != mid.stem:
-    #         print(i, wav.stem, mid.stem)
+    for wav_path, json_path in zip(wav_set, json_set):
+        if wav_path.stem != json_path.stem:
+            raise ValueError
 
 
-def _save_splitted_json(json_path):
-    dir_path = pathlib.Path(
-        "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
-    )
-    dir_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json_splitted")
+def _save_splitted_json(json_path, output_path):
+    # dir_path = pathlib.Path(
+    #     "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
+    # )
+    # dir_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json_splitted")
+    output_path = pathlib.Path(output_path)
     chunks = midia.split_json_by_slience(json_path)
-    if dir_path is None:
-        dir_path = Path("")
+    if output_path is None:
+        output_path = Path("")
     else:
-        dir_path = Path(dir_path)
-        dir_path.mkdir(exist_ok=True, parents=True)
-    file_path = dir_path / json_path.name
+        output_path = Path(output_path)
+        output_path.mkdir(exist_ok=True, parents=True)
+    file_path = output_path / json_path.name
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(chunks, f, indent=4, ensure_ascii=False)
 
 
-def save_splitted_json():
-    json_path = pathlib.Path(
-        "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
-    )
-    json_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json")
-    dir_path = pathlib.Path(
-        "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
-    )
+def save_splitted_json(json_path, output_path):
+    # json_path = pathlib.Path(
+    #     "C:/Users/chans/repo/dataset/다화자 가창 데이터 json"
+    # )
+    # json_path = pathlib.Path("d:/dataset/다화자 가창 데이터 json")
+    json_path = pathlib.Path(json_path)
+    # output_path = pathlib.Path(
+    #     "C:/Users/chans/repo/dataset/다화자 가창 데이터 json_splitted"
+    # )
     # for json_path in json_path.rglob("*.json"):
     #     chunks = midia.split_json_by_slience(json_path)
-    #     if dir_path is None:
-    #         dir_path = Path("")
+    #     if output_path is None:
+    #         output_path = Path("")
     #     else:
-    #         dir_path = Path(dir_path)
-    #         dir_path.mkdir(exist_ok=True, parents=True)
-    #     file_path = dir_path / json_path.name
+    #         output_path = Path(output_path)
+    #         output_path.mkdir(exist_ok=True, parents=True)
+    #     file_path = output_path / json_path.name
     #     with open(file_path, "w", encoding="utf-8") as f:
     #         json.dump(chunks, f, indent=4, ensure_ascii=False)
     with mp.Pool(mp.cpu_count()) as p:
-        samples = json_path.rglob("*.json")
-        p.map(_save_splitted_json, samples)
+        samples = list(json_path.rglob("*.json"))
+        args = zip(samples, (output_path for _ in range(len(samples))))
+        p.starmap(_save_splitted_json, args)
 
 
 def split_audio():
@@ -923,13 +902,67 @@ def split_audio():
     print(json_path)
 
 
-def preprocess_dataset(data_path, json_path, output_dir_path, sample_num=None):
-    def _split_audio(y, sr, start_time, end_time, output_filename):
-        start_sample = int(start_time * sr)  # Convert time to sample index
-        end_sample = int(end_time * sr)
+def _singer_id(filename):
+    sid = re.findall(r"s\d\d", filename)[0]
+    return int(sid[1:]) + 26
 
-        chunk = y[start_sample:end_sample]  # Extract the segment
-        soundfile.write(output_filename, chunk, sr)  # Save as WAV file
+
+def _split_audio(y, sr, start_time, end_time, output_filename):
+    start_sample = int(start_time * sr)  # Convert time to sample index
+    end_sample = int(end_time * sr)
+
+    chunk = y[start_sample:end_sample]  # Extract the segment
+    soundfile.write(output_filename, chunk, sr)  # Save as WAV file
+
+
+def _preprocess_dataset(
+    wav_path,
+    json_path,
+    pitch_dir_path,
+    duration_dir_path,
+    clips_dir_path,
+    sampling_rate,
+    hop_length,
+):
+    g2p = G2p()
+    if wav_path.stem != json_path.stem:
+        raise ValueError
+    filename = wav_path.stem
+    with open(json_path, "r", encoding="utf-8") as f:
+        json_data = json.load(f)
+
+    metadata = ""
+    y, sr = librosa.load(wav_path, sr=None)
+    for i, chunk in enumerate(json_data):
+        subfilename = f"{filename}_{i:02}"
+        lyric = "".join([item["lyric"] for item in chunk["chunk"]])
+        lyric = " ".join([g2p(x) for x in lyric.split()])
+        metadata += f"{subfilename}|{lyric}|{_singer_id(filename)}|28|SV\n"
+
+        np.save(
+            f"{pitch_dir_path}/{subfilename}.npy",
+            np.array([item["pitch"] for item in chunk["chunk"]]),
+        )
+
+        note_duration_frame = midia.duration_secs_to_frames(
+            np.array([item["length"] for item in chunk["chunk"]]),
+            sampling_rate,
+            hop_length,
+        )
+        np.save(f"{duration_dir_path}/{subfilename}.npy", note_duration_frame)
+
+        _split_audio(
+            y,
+            sr,
+            start_time=chunk["chunk_info"]["start_time"],
+            end_time=chunk["chunk_info"]["end_time"],
+            output_filename=f"{clips_dir_path}/{subfilename}.wav",
+        )
+    return metadata
+
+
+def preprocess_dataset(data_path, json_path, output_dir_path, sample_num=None):
+    verify_json_wav(data_path, json_path)
 
     wav_set = sorted(
         pathlib.Path(data_path).rglob("*.wav"), key=lambda x: x.stem
@@ -953,62 +986,75 @@ def preprocess_dataset(data_path, json_path, output_dir_path, sample_num=None):
     clips_dir_path = Path(clips_dir_path)
     clips_dir_path.mkdir(exist_ok=True, parents=True)
 
-    g2p = G2p()
-    for wav_path, json_path in zip(wav_set, json_set):
-        if wav_path.stem != json_path.stem:
-            raise ValueError
-        filename = wav_path.stem
-        with open(json_path, "r", encoding="utf-8") as f:
-            json_data = json.load(f)
+    # g2p = G2p()
+    # for wav_path, json_path in zip(wav_set, json_set):
+    #     if wav_path.stem != json_path.stem:
+    #         raise ValueError
+    #     filename = wav_path.stem
+    #     with open(json_path, "r", encoding="utf-8") as f:
+    #         json_data = json.load(f)
 
-        for i, chunk in enumerate(json_data):
-            lyric = "".join([item["lyric"] for item in chunk["chunk"]])
-            lyric = " ".join([g2p(x) for x in lyric.split()])
-            with open(
-                f"{output_dir_path}/metadata.txt", "a", encoding="utf-8"
-            ) as f:
-                f.write(f"{filename}_{i}|{lyric}|27|28|SV\n")
+    #     for i, chunk in enumerate(json_data):
+    #         lyric = "".join([item["lyric"] for item in chunk["chunk"]])
+    #         lyric = " ".join([g2p(x) for x in lyric.split()])
+    #         with open(
+    #             f"{output_dir_path}/metadata.txt", "a", encoding="utf-8"
+    #         ) as f:
+    #             f.write(
+    #                 f"{filename}_{i}|{lyric}|{_singer_id(filename)}|28|SV\n"
+    #             )
 
-        for i, chunk in enumerate(json_data):
-            np.save(
-                f"{pitch_dir_path}/{filename}_{i}.npy",
-                np.array([item["pitch"] for item in chunk["chunk"]]),
-            )
+    #     for i, chunk in enumerate(json_data):
+    #         np.save(
+    #             f"{pitch_dir_path}/{filename}_{i}.npy",
+    #             np.array([item["pitch"] for item in chunk["chunk"]]),
+    #         )
 
-        sampling_rate = 22050
-        hop_length = 256
-        for i, chunk in enumerate(json_data):
-            note_duration_frame = midia.duration_secs_to_frames(
-                np.array([item["length"] for item in chunk["chunk"]]),
-                sampling_rate,
-                hop_length,
-            )
-            np.save(
-                f"{duration_dir_path}/{filename}_{i}.npy", note_duration_frame
-            )
+    #     sampling_rate = 22050
+    #     hop_length = 256
+    #     for i, chunk in enumerate(json_data):
+    #         note_duration_frame = midia.duration_secs_to_frames(
+    #             np.array([item["length"] for item in chunk["chunk"]]),
+    #             sampling_rate,
+    #             hop_length,
+    #         )
+    #         np.save(
+    #             f"{duration_dir_path}/{filename}_{i}.npy", note_duration_frame
+    #         )
 
-        y, sr = librosa.load(wav_path, sr=None)
-        for i, chunk in enumerate(json_data):
-            _split_audio(
-                y,
-                sr,
-                start_time=chunk["chunk_info"]["start_time"],
-                end_time=chunk["chunk_info"]["end_time"],
-                output_filename=f"{clips_dir_path}/{filename}_{i}.wav",
-            )
+    #     y, sr = librosa.load(wav_path, sr=None)
+    #     for i, chunk in enumerate(json_data):
+    #         _split_audio(
+    #             y,
+    #             sr,
+    #             start_time=chunk["chunk_info"]["start_time"],
+    #             end_time=chunk["chunk_info"]["end_time"],
+    #             output_filename=f"{clips_dir_path}/{filename}_{i}.wav",
+    #         )
 
-        break
+    #     break
 
-    # with mp.Pool(mp.cpu_count()) as p:
-    #     samples = zip(
-    #         sorted(data_path_obj.rglob("*.wav"), key=lambda x: x.stem),
-    #         sorted(json_path_obj.rglob("*.json"), key=lambda x: x.stem),
-    #     )
-    #     if sample_num:
-    #         samples = list(samples)
-    #         if sample_num < len(samples):
-    #             samples = random.sample(samples, k=sample_num)
-    # error_array = np.array(p.starmap(estimated_bpm_error, samples))
+    sampling_rate = 22050
+    hop_length = 256
+    args = zip(
+        wav_set,
+        json_set,
+        (pitch_dir_path for _ in range(len(wav_set))),
+        (duration_dir_path for _ in range(len(wav_set))),
+        (clips_dir_path for _ in range(len(wav_set))),
+        (sampling_rate for _ in range(len(wav_set))),
+        (hop_length for _ in range(len(wav_set))),
+    )
+    with mp.Pool(mp.cpu_count()) as p:
+        if sample_num:
+            args = list(args)
+            if sample_num < len(args):
+                args = random.sample(args, k=sample_num)
+        metadata_list = p.starmap(_preprocess_dataset, args)
+        with open(
+            f"{output_dir_path}/metadata.txt", "w", encoding="utf-8"
+        ) as f:
+            f.write("".join(metadata_list))
 
 
 if __name__ == "__main__":
@@ -1078,6 +1124,7 @@ if __name__ == "__main__":
     # mid_path = "d:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/02.록팝/A. 남성/01. 20대/가창자_s02/ro_01274_+0_a_s02_m_02.mid"
     # mid_path = "D:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/02.록팝/A. 남성/03. 40대 이상/가창자_s18/ro_03036_+0_s_s18_m_04.mid"
     # mid_path = "D:/dataset/004.다화자 가창 데이터/01.데이터/2.Validation/라벨링데이터/01.발라드R&B/B. 여성/01. 20대/가창자_s01/ba_00118_+0_a_s01_f_02.mid"
+    # mid_path = "D:/dataset/004.다화자 가창 데이터/01.데이터/1.Training/라벨링데이터/01.발라드R&B/A. 남성/02. 30대/가창자_s11/ba_24340_+0_s_s11_m_03.mid"
     # ma = midia.MidiAnalyzer(samples[3]["mid"], convert_1_to_0=True)
     # ma = midia.MidiAnalyzer(mid_path, convert_1_to_0=True)
     # ma.split_space_note(remove_silence_threshold=0.3)
@@ -1089,8 +1136,6 @@ if __name__ == "__main__":
     #     blind_lyric=False,
     # )
     # ma.to_json(dir_path="json")
-    # conversion_gv_to_json()
-    # verify_json_wav()
     # test_slice_midi(samples[2]["wav"], samples[2]["mid"])
     # test_clips_duration("clips_prev")
     # test_clips_duration("clips")
@@ -1253,6 +1298,15 @@ if __name__ == "__main__":
     #     print()
 
     data_path = "d:/dataset/004.다화자 가창 데이터"
-    json_path = "d:/dataset/다화자 가창 데이터 json_splitted"
+    json_path = "d:/dataset/다화자 가창 데이터 json"
+    # conversion_gv_to_json(data_path, json_path)
+    # verify_json_wav(data_path, json_path)
+
+    json_splitted_path = "d:/dataset/다화자 가창 데이터 json_splitted"
+    # save_splitted_json(json_path, json_splitted_path)
+    # verify_json_wav(data_path, json_splitted_path)
+
     output_dir_path = "test_result"
-    preprocess_dataset(data_path, json_path, output_dir_path)
+    preprocess_dataset(
+        data_path, json_splitted_path, output_dir_path, sample_num=2
+    )
