@@ -788,7 +788,7 @@ def conversion_gv_to_json(data_path, json_path):
     # json_path = "d:/dataset/다화자 가창 데이터 json"
     data_path = pathlib.Path(data_path)
     with mp.Pool(mp.cpu_count()) as p:
-        samples = data_path.rglob("*.mid")
+        samples = list(data_path.rglob("*.mid"))
         args = zip(samples, (json_path for _ in range(len(samples))))
         p.starmap(_conversion_gv_to_json, args)
 
@@ -937,7 +937,7 @@ def _preprocess_dataset(
         subfilename = f"{filename}_{i:02}"
         lyric = "".join([item["lyric"] for item in chunk["chunk"]])
         lyric = " ".join([g2p(x) for x in lyric.split()])
-        metadata += f"{subfilename}|{lyric}|{_singer_id(filename)}|28|SV\n"
+        metadata += f"{subfilename}|{lyric}|{_singer_id(filename)}|11|SV\n"
 
         np.save(
             f"{pitch_dir_path}/{subfilename}.npy",
@@ -961,7 +961,14 @@ def _preprocess_dataset(
     return metadata
 
 
-def preprocess_dataset(data_path, json_path, output_dir_path, sample_num=None):
+def preprocess_dataset(
+    data_path,
+    json_path,
+    output_dir_path,
+    sample_num=None,
+    sampling_rate=22050,
+    hop_length=256,
+):
     verify_json_wav(data_path, json_path)
 
     wav_set = sorted(
@@ -1034,8 +1041,6 @@ def preprocess_dataset(data_path, json_path, output_dir_path, sample_num=None):
 
     #     break
 
-    sampling_rate = 22050
-    hop_length = 256
     args = zip(
         wav_set,
         json_set,
@@ -1306,7 +1311,12 @@ if __name__ == "__main__":
     # save_splitted_json(json_path, json_splitted_path)
     # verify_json_wav(data_path, json_splitted_path)
 
-    output_dir_path = "test_result"
+    output_dir_path = "d:/dataset/다화자 가창 데이터 preprocessed"
     preprocess_dataset(
-        data_path, json_splitted_path, output_dir_path, sample_num=2
+        data_path,
+        json_splitted_path,
+        output_dir_path,
+        sample_num=None,
+        sampling_rate=22050,
+        hop_length=256,
     )
